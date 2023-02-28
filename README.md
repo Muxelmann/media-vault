@@ -21,3 +21,5 @@ docker run \
     -p 80:5000 \
     muxelmann/media-vault
 ```
+
+The layout is inspired and made to match that of [Synology Photos](https://www.synology.com/en-en/dsm/feature/photos). But several features are missing and this service is no way near as nice looking.
