@@ -1,0 +1,32 @@
+{% macro convert_content_tree(content) %}
+    <span href="{{ url_for('content', content_path=content.href) }}" class="f {% if content.selected %}selected opened{% endif %}">{{ content.name }}</span>
+    {% if content.sub_content %}
+    <ol>
+        {% for sub_content in content.sub_content %}
+            <li>{{ convert_content_tree(sub_content) }}</li>
+        {% endfor %}
+    </ol>
+    {% endif %}
+    
+{% endmacro %}
+
+{% extends 'base.html.jinja2' %}
+
+{% block html_body %}
+<div class="top">
+    <div class="trace-back">
+        {% for crumb in breadcrumbs %}
+        {% if crumb.href %}
+            <a href="{{ url_for('content', content_path=crumb.href) }}">{{ crumb.name }}</a>
+        {% else %}
+            <a href="{{ url_for('base_content') }}">{{ crumb.name }}</a>
+        {% endif %}
+        {% endfor %}
+    </div>
+</div>
+
+<div class="main-wrapper">
+    {% block main_wrapper %}{% endblock main_wrapper %}
+</div>
+
+{% endblock html_body %}

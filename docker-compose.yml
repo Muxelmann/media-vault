@@ -1,0 +1,15 @@
+version: '3.4'
+
+services:
+  web:
+    image: media-vault
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    environment:
+      # - FLASK_DATA=/data
+      - FLASK_SECRET=DEBUG_SECRET
+    ports:
+      - 5001:5000
+    volumes:
+      - ./data:/data:rw

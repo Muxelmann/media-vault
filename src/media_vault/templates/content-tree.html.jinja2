@@ -1,0 +1,25 @@
+{% extends 'content.html.jinja2' %}
+
+{% block main_wrapper %}
+    <div id="nav-tree">
+        {% if content_tree %}
+            {{ convert_content_tree(content_tree) }}
+        {% endif %}
+    </div>
+    <div id="thumb-wrapper">
+    {% for thumb in thumbs %}
+        {% if thumb.content_type == "dir" %}
+            <a href="{{ thumb.href }}" class="thumb">{{ thumb.name }}</a>
+        {% elif thumb.content_type == "image" %}
+            <a href="{{ thumb.href }}" style="background-image: url('{{ thumb.data_src }}');" class="thumb lazy-thumb"></a>
+        {% elif thumb.content_type == "video" %}
+            <a href="{{ thumb.href }}" class="thumb lazy-thumb">{{ thumb.name }}</a>
+        {% else %}
+            <div class="thumb">{{ thumb.name }}</div>
+        {% endif %}
+    {% endfor %}
+    </div>
+    
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+
+{% endblock main_wrapper %}
