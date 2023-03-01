@@ -59,9 +59,10 @@ class ContentElement:
                 self.children.append(ContentElement(sub_path, sub_path, self))
 
     def _close_children(self) -> None:
+        if not self.is_open:
+            return
+        
         for child in self.children:
-            if not child.is_open:
-                break
             child.is_open = False
             child._close_children()
 
