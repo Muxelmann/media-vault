@@ -5,7 +5,7 @@ from flask import Flask, render_template, abort, redirect, url_for, send_file
 def get_content_type(root_content_path: str, content_path: str = "") -> str:
     if os.path.isdir(os.path.join(root_content_path, content_path )):
         return "dir"
-    if os.path.splitext(content_path)[1].lower() in [".png", ".jpg", ".gif"]:
+    if os.path.splitext(content_path)[1].lower() in [".png", ".jpg", ".jpeg", ".gif"]:
         return "image"
     if os.path.splitext(content_path)[1].lower() in [".mp4", ".m4v"]:
         return "video"
