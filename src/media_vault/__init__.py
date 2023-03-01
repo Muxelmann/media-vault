@@ -60,6 +60,8 @@ class ContentElement:
 
     def _close_children(self) -> None:
         for child in self.children:
+            if not child.is_open:
+                break
             child.is_open = False
             child._close_children()
 
