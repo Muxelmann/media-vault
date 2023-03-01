@@ -1,15 +1,3 @@
-{% macro convert_content_tree(content) %}
-    <span href="{{ url_for('content', content_path=content.href) }}" class="f {% if content.selected %}selected opened{% endif %}">{{ content.name }}</span>
-    {% if content.sub_content %}
-    <ol>
-        {% for sub_content in content.sub_content %}
-            <li>{{ convert_content_tree(sub_content) }}</li>
-        {% endfor %}
-    </ol>
-    {% endif %}
-    
-{% endmacro %}
-
 {% extends 'base.html.jinja2' %}
 
 {% block html_body %}
