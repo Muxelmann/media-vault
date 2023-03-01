@@ -1,4 +1,5 @@
 import os
+import logging
 
 from flask import Flask, render_template, abort, redirect, url_for, send_file
 
@@ -27,6 +28,10 @@ class ContentElement:
 
     root_content_path = None
     href_dict = dict[str, "ContentElement"]()
+
+    @classmethod
+    def get_full_content_path(cls, content_path: str) -> str:
+        return os.path.join(cls.root_content_path, content_path)
 
     def __init__(self, name: str, sub_path: str = "", parent: "ContentElement" = None) -> None:
         self.name = name
@@ -135,14 +140,16 @@ def get_neighboring(root_content_path: str, content_path: str) -> dict:
         "next": content_url_next
     }
 
-def make_app(secret_key: str, instance_path: str) -> Flask:
+def make_app(secret_key: str, data_path: str) -> Flask:
     app = Flask(__name__)
 
     app.secret_key = secret_key
-    app.instance_path = instance_path
 
-    ContentElement.root_content_path = instance_path
+    ContentElement.root_content_path = data_path
+
+    logging.info("content_tree -> start")
     content_tree = ContentElement("home")
+    logging.info("content_tree -> parsed")
 
     @app.route("/")
     def index():
@@ -157,16 +164,20 @@ def make_app(secret_key: str, instance_path: str) -> Flask:
         return return_content(content_path)
     
     def return_content(content_path: str = ""):
-        full_content_path = os.path.join(app.instance_path, content_path)
+        logging.info("return_content() -> start")
+        full_content_path = ContentElement.get_full_content_path(content_path)
         if not os.path.exists(full_content_path):
             return abort(404)
 
         breadcrumbs = get_breadcrumbs(content_path)
+        logging.info("return_content() -> breadcrumbs")
 
         if os.path.isdir(full_content_path):
+            logging.info("return_content() -> is dir")
             content_tree.open_path(content_path)
-            thumbs = get_thumbs(app.instance_path, content_path)
+            thumbs = get_thumbs(ContentElement.root_content_path, content_path)
 
+            logging.info("return_content() -> returning")
             return render_template(
                 "content-tree.html.jinja2",
                 breadcrumbs=breadcrumbs,
@@ -175,13 +186,16 @@ def make_app(secret_key: str, instance_path: str) -> Flask:
                 )
 
         else:
+            logging.info("return_content() -> is file")
 
-            neighbors = get_neighboring(app.instance_path, content_path)
+            neighbors = get_neighboring(ContentElement.root_content_path, content_path)
+            logging.info("return_content() -> neighbors obtained")
             content = {
                 "src": url_for("get_content", content_path=content_path),
-                "type": get_content_type(app.instance_path, content_path)
+                "type": get_content_type(ContentElement.root_content_path, content_path)
             }
 
+            logging.info("return_content() -> returning")
             return render_template(
                 "content-file.html.jinja2",
                 breadcrumbs = breadcrumbs,
@@ -189,10 +203,9 @@ def make_app(secret_key: str, instance_path: str) -> Flask:
                 content=content
                 )
 
-
     @app.route("/g/<path:content_path>")
     def get_content(content_path):
-        full_path = os.path.join(app.instance_path, content_path)
-        return send_file(full_path)
+        full_content_path = ContentElement.get_full_content_path(content_path)
+        return send_file(full_content_path)
 
     return app
