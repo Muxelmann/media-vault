@@ -1,7 +1,3 @@
-# FIXME: Store tree in memory to speed up loading times
-
-# TODO: Oder content alphabetically
-
 import os
 
 from flask import Flask, render_template, abort, redirect, url_for, send_file
@@ -27,29 +23,58 @@ def get_breadcrumbs(content_path: str) -> list[dict]:
     
     return breadcrumbs
 
-def get_content_tree(root_content_path: str, content_path: str = "", is_root: bool = True, is_selected: bool = True, href: str = "") -> dict:
-    content_tree = {
-        "name": "home" if is_root else os.path.split(root_content_path)[-1],
-        "selected": is_selected,
-        "href": href,
-        "sub_content": []
-    }
+class ContentElement:
 
-    for sub_content_name in [c for c in os.listdir(root_content_path) if c[0] != "."]:
-        root_sub_content_path = os.path.join(root_content_path, sub_content_name)
-        if os.path.isdir(root_sub_content_path):
+    root_content_path = None
+    href_dict = dict[str, "ContentElement"]()
 
-            sub_content_path = ""
-            is_selected = False
-            if content_path != "" and sub_content_name == content_path.split("/")[0]:
-                sub_content_path = "/".join(content_path.split("/")[1:])
-                is_selected = True
+    def __init__(self, name: str, sub_path: str = "", parent: "ContentElement" = None) -> None:
+        self.name = name
+        self.sub_path = sub_path
+        self.parent = parent
+        self.children = list["ContentElement"]()
+        self.is_open = parent is None
 
-            sub_href = sub_content_name if href == "" else href + "/" + sub_content_name
+        self._parse_tree()
+        self.href_dict[self.href] = self
 
-            content_tree["sub_content"].append(get_content_tree(root_sub_content_path, sub_content_path, False, is_selected, sub_href))
+    @property
+    def content_path(self) -> str:
+        if self.parent is None:
+            return os.path.join(self.root_content_path, self.sub_path)
+        return os.path.join(self.parent.content_path, self.sub_path)
 
-    return content_tree
+    @property
+    def href(self) -> str:
+        if self.parent is None:
+            return self.sub_path
+        href = self.parent.href + "/" + self.sub_path
+        return href[1:] if href[0] == "/" else href
+
+    def _parse_tree(self) -> None:
+        content = [c for c in os.listdir(self.content_path) if c[0] != "."]
+        content.sort()
+        for sub_path in content:
+            if os.path.isdir(os.path.join(self.content_path, sub_path)):
+                self.children.append(ContentElement(sub_path, sub_path, self))
+
+    def _close_children(self) -> None:
+        for child in self.children:
+            child.is_open = False
+            child._close_children()
+
+    def _open(self) -> None:
+        self.is_open = True
+        if self.parent is not None:
+            self.parent._open()
+        
+    def open_path(self, path: str) -> None:
+        self._close_children()
+
+        if path not in self.href_dict.keys():
+            return
+        
+        self.href_dict[path]._open()
 
 def get_thumbs(root_content_path: str, content_path: str = None) -> list[dict]:
 
@@ -57,7 +82,9 @@ def get_thumbs(root_content_path: str, content_path: str = None) -> list[dict]:
 
     full_content_path = os.path.join(root_content_path, content_path)
 
-    for content_name in [c for c in os.listdir(full_content_path) if c[0] != "."]:
+    contents = [c for c in os.listdir(full_content_path) if c[0] != "."]
+    contents.sort()
+    for content_name in contents:
         
         content_type = get_content_type(full_content_path, content_name)
         href = None
@@ -88,6 +115,7 @@ def get_neighboring(root_content_path: str, content_path: str) -> dict:
     full_path = os.path.join(root_content_path, parent_path)
 
     contents = [c for c in os.listdir(full_path) if c[0] != "."]
+    contents.sort()
     content_index = contents.index(content_name)
 
     content_url_previous = None
@@ -113,6 +141,9 @@ def make_app(secret_key: str, instance_path: str) -> Flask:
     app.secret_key = secret_key
     app.instance_path = instance_path
 
+    ContentElement.root_content_path = instance_path
+    content_tree = ContentElement("home")
+
     @app.route("/")
     def index():
         return redirect(url_for("base_content"))
@@ -133,7 +164,7 @@ def make_app(secret_key: str, instance_path: str) -> Flask:
         breadcrumbs = get_breadcrumbs(content_path)
 
         if os.path.isdir(full_content_path):
-            content_tree = get_content_tree(app.instance_path, content_path)
+            content_tree.open_path(content_path)
             thumbs = get_thumbs(app.instance_path, content_path)
 
             return render_template(
