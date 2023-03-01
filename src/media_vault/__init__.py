@@ -1,5 +1,4 @@
 import os
-import logging
 
 from flask import Flask, render_template, abort, redirect, url_for, send_file
 
@@ -147,9 +146,7 @@ def make_app(secret_key: str, data_path: str) -> Flask:
 
     ContentElement.root_content_path = data_path
 
-    logging.info("content_tree -> start")
     content_tree = ContentElement("home")
-    logging.info("content_tree -> parsed")
 
     @app.route("/")
     def index():
@@ -164,20 +161,16 @@ def make_app(secret_key: str, data_path: str) -> Flask:
         return return_content(content_path)
     
     def return_content(content_path: str = ""):
-        logging.info("return_content() -> start")
         full_content_path = ContentElement.get_full_content_path(content_path)
         if not os.path.exists(full_content_path):
             return abort(404)
 
         breadcrumbs = get_breadcrumbs(content_path)
-        logging.info("return_content() -> breadcrumbs")
 
         if os.path.isdir(full_content_path):
-            logging.info("return_content() -> is dir")
             content_tree.open_path(content_path)
             thumbs = get_thumbs(ContentElement.root_content_path, content_path)
 
-            logging.info("return_content() -> returning")
             return render_template(
                 "content-tree.html.jinja2",
                 breadcrumbs=breadcrumbs,
@@ -186,16 +179,13 @@ def make_app(secret_key: str, data_path: str) -> Flask:
                 )
 
         else:
-            logging.info("return_content() -> is file")
 
             neighbors = get_neighboring(ContentElement.root_content_path, content_path)
-            logging.info("return_content() -> neighbors obtained")
             content = {
                 "src": url_for("get_content", content_path=content_path),
                 "type": get_content_type(ContentElement.root_content_path, content_path)
             }
 
-            logging.info("return_content() -> returning")
             return render_template(
                 "content-file.html.jinja2",
                 breadcrumbs = breadcrumbs,

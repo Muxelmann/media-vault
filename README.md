@@ -18,7 +18,7 @@ Run using:
 docker run \
     -v <HOST_DATA_PATH>:/data:ro \
     -e FLASK_SECRET=<SOME_SECRET> \
-    -p 80:5000 \
+    -p 8080:80 \
     muxelmann/media-vault
 ```
 
