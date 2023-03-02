@@ -1,9 +1,9 @@
 {% macro convert_content_tree(content) %}
     <span href="{{ url_for('content', content_path=content.href) }}" class="f {% if content.is_open %}selected opened{% endif %}">{{ content.name }}</span>
-    {% if content.children %}
+    {% if content.directories %}
     <ol>
-        {% for child in content.children %}
-            <li>{{ convert_content_tree(child) }}</li>
+        {% for dir in content.directories %}
+            <li>{{ convert_content_tree(dir) }}</li>
         {% endfor %}
     </ol>
     {% endif %}
