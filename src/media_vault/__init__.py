@@ -1,5 +1,6 @@
 import os
-from PIL import Image
+from PIL import Image, ImageSequence, ImageFile
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 from flask import Flask, render_template, abort, redirect, url_for, send_file
 
@@ -53,6 +54,8 @@ class ContentElement:
         match get_content_type(full_tmp_path):
             case "image":
                 with Image.open(full_content_path) as img:
+                    
+
                     aspect_ratio = img.width / img.height
                     if aspect_ratio > 1:
                         new_height = 200
@@ -61,7 +64,21 @@ class ContentElement:
                         new_height = int(200 / aspect_ratio)
                         new_width = 200
 
-                    img.resize((new_width, new_height)).save(full_tmp_path)
+                    if img.format == "GIF":
+                        frames = ImageSequence.Iterator(img)
+
+                        def thumbnails(frames):
+                            for frame in frames:
+                                thumb = frame.resize((new_width, new_height))
+                                yield thumb
+                        
+                        frames = thumbnails(frames)
+                        out_img = next(frames)
+                        out_img.info = img.info
+                        out_img.save(full_tmp_path, save_all=True, append_images=list(frames), optimize=True, quality=10)
+                    else:
+                        img.resize((new_width, new_height)).save(full_tmp_path, optimize=True, quality=10)
+
                     return full_tmp_path
             case _:
                 return full_content_path
