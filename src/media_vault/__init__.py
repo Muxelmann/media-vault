@@ -43,7 +43,10 @@ class ContentElement:
         
         tmp_dir = os.path.split(full_tmp_path)[0]
         if not os.path.exists(tmp_dir):
-            os.makedirs(tmp_dir)
+            try:
+                os.makedirs(tmp_dir)
+            except FileExistsError as e:
+                print(e)
 
         full_content_path = cls.get_full_content_path(content_path)
 
@@ -115,13 +118,13 @@ def get_thumbs(root_content_path: str, content_path: str = None) -> list[dict]:
 
     thumbs = list[dict]()
 
-    full_content_path = os.path.join(root_content_path, content_path)
+    full_content_path = ContentElement.get_full_content_path(content_path)
 
     contents = [c for c in os.listdir(full_content_path) if c[0] != "."]
     contents.sort()
     for content_name in contents:
         
-        content_type = get_content_type(ContentElement.get_full_content_path(content_name))
+        content_type = get_content_type(os.path.join(full_content_path, content_name))
         href = None
         data_src = None
         match content_type:
