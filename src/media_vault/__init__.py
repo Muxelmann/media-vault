@@ -77,7 +77,7 @@ class ContentElement:
                         out_img.info = img.info
                         out_img.save(full_tmp_path, save_all=True, append_images=list(frames), optimize=True, quality=10)
                     else:
-                        img.resize((new_width, new_height)).save(full_tmp_path, optimize=True, quality=10)
+                        img.resize((new_width, new_height)).save(full_tmp_path, optimize=True, quality=90)
 
                     return full_tmp_path
             case _:
