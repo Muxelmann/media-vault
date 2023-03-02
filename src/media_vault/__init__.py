@@ -1,9 +1,10 @@
 import os
+from PIL import Image
 
 from flask import Flask, render_template, abort, redirect, url_for, send_file
 
-def get_content_type(root_content_path: str, content_path: str = "") -> str:
-    if os.path.isdir(os.path.join(root_content_path, content_path )):
+def get_content_type(content_path) -> str:
+    if os.path.isdir(content_path):
         return "dir"
     if os.path.splitext(content_path)[1].lower() in [".png", ".jpg", ".jpeg", ".gif"]:
         return "image"
@@ -26,17 +27,47 @@ def get_breadcrumbs(content_path: str) -> list[dict]:
 class ContentElement:
 
     root_content_path = None
+    root_tmp_path = None
+
     href_dict = dict[str, "ContentElement"]()
 
     @classmethod
     def get_full_content_path(cls, content_path: str) -> str:
         return os.path.join(cls.root_content_path, content_path)
 
+    @classmethod
+    def get_full_tmp_path(cls, content_path: str) -> str:
+        full_tmp_path = os.path.join(cls.root_tmp_path, content_path)
+        if os.path.exists(full_tmp_path):
+            return full_tmp_path
+        
+        tmp_dir = os.path.split(full_tmp_path)[0]
+        if not os.path.exists(tmp_dir):
+            os.makedirs(tmp_dir)
+
+        full_content_path = cls.get_full_content_path(content_path)
+
+        match get_content_type(full_tmp_path):
+            case "image":
+                with Image.open(full_content_path) as img:
+                    aspect_ratio = img.width / img.height
+                    if aspect_ratio > 1:
+                        new_height = 200
+                        new_width = int(200 * aspect_ratio)
+                    else:
+                        new_height = int(200 / aspect_ratio)
+                        new_width = 200
+
+                    img.resize((new_width, new_height)).save(full_tmp_path)
+                    return full_tmp_path
+            case _:
+                return full_content_path
+
     def __init__(self, name: str, sub_path: str = "", parent: "ContentElement" = None) -> None:
         self.name = name
         self.sub_path = sub_path
         self.parent = parent
-        self.children = list["ContentElement"]()
+        self.directories = list["ContentElement"]()
         self.is_open = parent is None
 
         self._parse_tree()
@@ -45,7 +76,7 @@ class ContentElement:
     @property
     def content_path(self) -> str:
         if self.parent is None:
-            return os.path.join(self.root_content_path, self.sub_path)
+            return self.get_full_content_path(self.sub_path)
         return os.path.join(self.parent.content_path, self.sub_path)
 
     @property
@@ -60,12 +91,12 @@ class ContentElement:
         content.sort()
         for sub_path in content:
             if os.path.isdir(os.path.join(self.content_path, sub_path)):
-                self.children.append(ContentElement(sub_path, sub_path, self))
+                self.directories.append(ContentElement(sub_path, sub_path, self))
 
-    def _close_children(self) -> None:
-        for child in self.children:
-            child.is_open = False
-            child._close_children()
+    def _close_directories(self) -> None:
+        for dir in self.directories:
+            dir.is_open = False
+            dir._close_directories()
 
     def _open(self) -> None:
         self.is_open = True
@@ -73,7 +104,7 @@ class ContentElement:
             self.parent._open()
         
     def open_path(self, path: str) -> None:
-        self._close_children()
+        self._close_directories()
 
         if path not in self.href_dict.keys():
             return
@@ -90,7 +121,7 @@ def get_thumbs(root_content_path: str, content_path: str = None) -> list[dict]:
     contents.sort()
     for content_name in contents:
         
-        content_type = get_content_type(full_content_path, content_name)
+        content_type = get_content_type(ContentElement.get_full_content_path(content_name))
         href = None
         data_src = None
         match content_type:
@@ -98,7 +129,7 @@ def get_thumbs(root_content_path: str, content_path: str = None) -> list[dict]:
                 href = url_for("content", content_path=content_name if content_path == "" else content_path + "/" + content_name)
             case "image":
                 href = url_for("content", content_path=content_name if content_path == "" else content_path + "/" + content_name)
-                data_src = url_for("get_content", content_path=content_name if content_path == "" else content_path + "/" + content_name)
+                data_src = url_for("get_thumb", content_path=content_name if content_path == "" else content_path + "/" + content_name)
             case "video":
                 href = url_for("content", content_path=content_name if content_path == "" else content_path + "/" + content_name)
             case _:
@@ -139,12 +170,13 @@ def get_neighboring(root_content_path: str, content_path: str) -> dict:
         "next": content_url_next
     }
 
-def make_app(secret_key: str, data_path: str) -> Flask:
+def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
     app = Flask(__name__)
 
     app.secret_key = secret_key
 
     ContentElement.root_content_path = data_path
+    ContentElement.root_tmp_path = tmp_path
 
     content_tree = ContentElement("home")
 
@@ -183,7 +215,7 @@ def make_app(secret_key: str, data_path: str) -> Flask:
             neighbors = get_neighboring(ContentElement.root_content_path, content_path)
             content = {
                 "src": url_for("get_content", content_path=content_path),
-                "type": get_content_type(ContentElement.root_content_path, content_path)
+                "type": get_content_type(ContentElement.get_full_content_path(content_path))
             }
 
             return render_template(
@@ -192,6 +224,13 @@ def make_app(secret_key: str, data_path: str) -> Flask:
                 neighbors = neighbors,
                 content=content
                 )
+        
+    @app.route("/t/<path:content_path>")
+    def get_thumb(content_path):
+        full_thumb_path = ContentElement.get_full_tmp_path(content_path)
+        if not os.path.exists(full_thumb_path):
+            return redirect(url_for("get_content", content_path=content_path))
+        return send_file(full_thumb_path)
 
     @app.route("/g/<path:content_path>")
     def get_content(content_path):
