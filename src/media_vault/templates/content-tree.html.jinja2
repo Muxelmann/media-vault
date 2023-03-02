@@ -21,7 +21,7 @@
     <div id="thumb-wrapper">
     {% for thumb in thumbs %}
         {% if thumb.content_type == "dir" %}
-            <a href="{{ thumb.href }}" class="thumb">{{ thumb.name }}</a>
+            <a href="{{ thumb.href }}" class="thumb dir">{{ thumb.name }}</a>
         {% elif thumb.content_type == "image" %}
             <a href="{{ thumb.href }}" style="background-image: url('{{ thumb.data_src }}');" class="thumb lazy-thumb"></a>
         {% elif thumb.content_type == "video" %}

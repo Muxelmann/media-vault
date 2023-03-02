@@ -188,15 +188,19 @@ a.content-previous:hover, a.content-next:hover {
 }
 
 #thumb-wrapper .thumb {
-    background-color: #eeeeee;
     border-radius: 0.5rem;
     background-size: cover;
     background-position: center;
     overflow: hidden;
+    border: 1px solid #999999;
 }
 
 #thumb-wrapper .thumb.lazy-thumb {
     background-image: none !important;
+}
+
+#thumb-wrapper .thumb.dir {
+    background-color: #eeeeee;
 }
 
 /* 217px delta */
