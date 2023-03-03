@@ -25,7 +25,7 @@
         {% elif thumb.content_type == "image" %}
             <a href="{{ thumb.href }}" style="background-image: url('{{ thumb.data_src }}');" class="thumb lazy-thumb"></a>
         {% elif thumb.content_type == "video" %}
-            <a href="{{ thumb.href }}" class="thumb lazy-thumb">{{ thumb.name }}</a>
+            <a href="{{ thumb.href }}" style="background-image: url('{{ thumb.data_src }}');" class="thumb lazy-thumb">{{ thumb.name }}</a>
         {% else %}
             <div class="thumb">{{ thumb.name }}</div>
         {% endif %}

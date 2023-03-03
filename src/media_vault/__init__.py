@@ -1,4 +1,5 @@
 import os
+import ffmpeg
 from PIL import Image, ImageSequence, ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
@@ -7,7 +8,7 @@ from flask import Flask, render_template, abort, redirect, url_for, send_file
 def get_content_type(content_path) -> str:
     if os.path.isdir(content_path):
         return "dir"
-    if os.path.splitext(content_path)[1].lower() in [".png", ".jpg", ".jpeg", ".gif"]:
+    if os.path.splitext(content_path)[1].lower() in [".png", ".jpg", ".jpeg", ".gif", ".webp"]:
         return "image"
     if os.path.splitext(content_path)[1].lower() in [".mp4", ".m4v"]:
         return "video"
@@ -39,8 +40,6 @@ class ContentElement:
     @classmethod
     def get_full_tmp_path(cls, content_path: str) -> str:
         full_tmp_path = os.path.join(cls.root_tmp_path, content_path)
-        if os.path.exists(full_tmp_path):
-            return full_tmp_path
         
         tmp_dir = os.path.split(full_tmp_path)[0]
         if not os.path.exists(tmp_dir):
@@ -53,8 +52,10 @@ class ContentElement:
 
         match get_content_type(full_tmp_path):
             case "image":
+                if os.path.exists(full_tmp_path):
+                    return full_tmp_path
+                
                 with Image.open(full_content_path) as img:
-                    
 
                     aspect_ratio = img.width / img.height
                     if aspect_ratio > 1:
@@ -80,6 +81,36 @@ class ContentElement:
                         img.resize((new_width, new_height)).save(full_tmp_path, optimize=True, quality=90)
 
                     return full_tmp_path
+            case "video":
+                full_tmp_video_path, _ = os.path.splitext(full_tmp_path)
+                full_tmp_video_path += ".png"
+                if os.path.exists(full_tmp_video_path):
+                    return full_tmp_video_path
+
+                probe = ffmpeg.probe(full_content_path)
+                duration = float(probe['streams'][0]['duration'])
+                for stream in probe['streams']:
+                    if stream['codec_type'] == "video":
+                        width = stream["width"]
+                        height = stream["height"]
+                        break
+                width = probe['streams'][0]['width']
+                height = probe['streams'][0]['height']
+                aspect_ratio = width / height
+                if aspect_ratio > 1:
+                    new_height = 200
+                    new_width = int(200 * aspect_ratio)
+                else:
+                    new_height = int(200 / aspect_ratio)
+                    new_width = 200
+
+                stream = ffmpeg.input(full_content_path, ss=duration / 2)
+                stream = ffmpeg.filter(stream, "scale", new_width, new_height)
+                stream = ffmpeg.output(stream, full_tmp_video_path, vframes=1)
+                stream = ffmpeg.overwrite_output(stream)
+                ffmpeg.run(stream, capture_stdout=True, capture_stderr=True)
+                
+                return full_tmp_video_path
             case _:
                 return full_content_path
 
@@ -144,19 +175,16 @@ def get_thumbs(root_content_path: str, content_path: str = None) -> list[dict]:
         content_type = get_content_type(os.path.join(full_content_path, content_name))
         href = None
         data_src = None
-        match content_type:
-            case "dir":
-                href = url_for("content", content_path=content_name if content_path == "" else content_path + "/" + content_name)
-            case "image":
-                href = url_for("content", content_path=content_name if content_path == "" else content_path + "/" + content_name)
-                data_src = url_for("get_thumb", content_path=content_name if content_path == "" else content_path + "/" + content_name)
-            case "video":
-                href = url_for("content", content_path=content_name if content_path == "" else content_path + "/" + content_name)
-            case _:
-                href = "#"
+        if content_type == "dir":
+            href = url_for("content", content_path=content_name if content_path == "" else content_path + "/" + content_name)
+        elif content_type in ["image", "video"]:
+            href = url_for("content", content_path=content_name if content_path == "" else content_path + "/" + content_name)
+            data_src = url_for("get_thumb", content_path=content_name if content_path == "" else content_path + "/" + content_name)
+        else:
+            href = "#"
 
         thumbs.append({
-            "name": content_name,
+            "name": os.path.splitext(content_name)[0],
             "content_type": content_type,
             "href": href,
             "data_src": data_src
@@ -248,8 +276,7 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
     @app.route("/t/<path:content_path>")
     def get_thumb(content_path):
         full_thumb_path = ContentElement.get_full_tmp_path(content_path)
-        if not os.path.exists(full_thumb_path):
-            return redirect(url_for("get_content", content_path=content_path))
+        print(full_thumb_path)
         return send_file(full_thumb_path)
 
     @app.route("/g/<path:content_path>")

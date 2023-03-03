@@ -193,6 +193,20 @@ a.content-previous:hover, a.content-next:hover {
     background-position: center;
     overflow: hidden;
     border: 1px solid #999999;
+
+    color: #000000;
+    text-decoration: none !important;
+    text-align: right;
+    text-shadow:
+        0 0 5px white,
+        0 0 5px white,
+        0 0 5px white,
+        0 0 5px white,
+        0 0 5px white,
+        0 0 5px white,
+        0 0 5px white,
+        0 0 5px white,
+        0 0 5px white;
 }
 
 #thumb-wrapper .thumb.lazy-thumb {

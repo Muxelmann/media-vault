@@ -9,9 +9,18 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # Turns off buffering for easier container logging
 ENV PYTHONUNBUFFERED=1
 
+RUN \
+    apt-get -y update && \
+    apt-get -y upgrade && \
+    apt-get install -y --no-install-recommends ffmpeg && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 # Install pip requirements
 COPY requirements.txt .
-RUN python -m pip install -r requirements.txt
+RUN \
+    python -m pip install --upgrade pip && \
+    python -m pip install -r requirements.txt
 
 WORKDIR /app
 COPY ./src /app
