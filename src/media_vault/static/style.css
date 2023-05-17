@@ -11,22 +11,24 @@ body {
     font-family: sans-serif;
 }
 
-.top {
+#top {
     position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     height: 3rem;
     overflow-x: auto;
     overflow-y: hidden;
-    max-width: 100%;
+    width: 100vw;
 }
 
-.trace-back {
+#top a {
+    margin: 0 0.5rem;
+    display: block;
     position: relative;
-    display: flex;
-    height: 100%;
-    align-items: center;
 }
 
-.trace-back::after {
+#top::after {
     position: absolute;
     content: "";
     width: calc(100% - 0.5rem);
@@ -36,10 +38,10 @@ body {
     background-color: black;
 }
 
-.trace-back a {
-    margin: 0 0.5rem;
-    display: block;
+.trace-back {
     position: relative;
+    display: flex;
+    align-items: center;
 }
 
 .trace-back a:not(:last-of-type)::after {
