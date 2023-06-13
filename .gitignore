@@ -4,4 +4,4 @@
 **/__pycache__
 **/.dockerignore
 **/data
-**/tmp
+**/cache
