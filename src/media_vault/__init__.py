@@ -89,13 +89,15 @@ class ContentElement:
 
                 probe = ffmpeg.probe(full_content_path)
                 duration = float(probe['streams'][0]['duration'])
+                width, height = None, None
                 for stream in probe['streams']:
                     if stream['codec_type'] == "video":
                         width = stream["width"]
                         height = stream["height"]
                         break
-                width = probe['streams'][0]['width']
-                height = probe['streams'][0]['height']
+                if width is None or height is None:
+                    width = 1280
+                    height = 720
                 aspect_ratio = width / height
                 if aspect_ratio > 1:
                     new_height = 200
