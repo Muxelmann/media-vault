@@ -1,0 +1,13 @@
+{% extends 'content/base.html.jinja2' %}
+
+{% block main %}
+
+<div id="content-grid">
+
+    {% for c in content_list %}
+    <a href="{{ c.href }}" {% if c.thumb !=None %} class="lazy-thumb" style="background-image: url('{{ c.thumb }}');" {%
+        endif %}>{{ c.name }}</a>
+    {% endfor %}
+</div>
+
+{% endblock main %}

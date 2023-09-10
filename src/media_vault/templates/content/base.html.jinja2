@@ -1,0 +1,20 @@
+{% extends 'base.html.jinja2' %}
+
+{% block html_body %}
+
+<div id="top">
+    <div class="trace-back">
+        <a href="/">home</a>
+        {% for crumb in g.breadcrumbs %}
+        {% set url = g.breadcrumbs[:loop.index] | join('/') %}
+        <a href="{{ url_for('get_content', content_path=url) }}">{{ crumb }}</a>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="main-wrapper">
+    {% block main %}{% endblock main %}
+</div>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+{% endblock html_body %}

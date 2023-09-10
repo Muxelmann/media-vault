@@ -6,7 +6,7 @@ if secret_key is None:
     raise Exception("Specify a valid `FLASK_SECRET`")
 
 data_path = os.environ.get("DATA_PATH", "/data")
-tmp_path = os.environ.get("TMP_PATH", "/cache")
+tmp_path = os.environ.get("TMP_PATH", "/tmp")
 
 log_file = os.environ.get("LOG_FILE", None)
 

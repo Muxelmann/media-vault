@@ -1,0 +1,21 @@
+{% extends 'content/base.html.jinja2' %}
+
+{% block main %}
+
+{% if item.type == 'image' %}
+
+<img src="{{ item.href }}" alt="">
+
+{% elif item.type == 'video' %}
+
+<video controls autoplay>
+    <source src="{{ item.href }}" type="video/{{ item.suffix }}">
+    Your browser does not support the video tag.
+</video>
+
+{% else %}
+unknown
+{% endif %}
+
+
+{% endblock main %}
