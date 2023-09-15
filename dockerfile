@@ -11,14 +11,18 @@ ENV PYTHONUNBUFFERED=1
 
 RUN \
     apt-get -y update && \
-    apt-get install -y --no-install-recommends ffmpeg && \
+    apt-get install -y --no-install-recommends \
+    build-essential \
+    libjpeg-dev \
+    zlib1g-dev \
+    ffmpeg && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 # Install pip requirements
 COPY requirements.txt .
 RUN \
-    python -m pip install --upgrade pip && \
+    # python -m pip install --upgrade pip && \
     python -m pip install -r requirements.txt
 
 WORKDIR /app
