@@ -89,6 +89,8 @@ body {
     background-size: cover;
     border-radius: 1rem;
     overflow: hidden;
+    text-shadow: 0 0 4px black, 0 0 4px black, 0 0 4px black;
+    color: rgb(255, 255, 255);
 }
 
 #content-grid .lazy-thumb {
@@ -97,31 +99,31 @@ body {
 
 /* 217px delta */
 @media (max-width: 1738px) {
-    #thumb-wrapper {
+    #content-grid {
         grid-template-columns: repeat(6, var(--thumb-size));
     }
 }
 
 @media (max-width: 1521px) {
-    #thumb-wrapper {
+    #content-grid {
         grid-template-columns: repeat(5, var(--thumb-size));
     }
 }
 
 @media (max-width: 1304px) {
-    #thumb-wrapper {
+    #content-grid {
         grid-template-columns: repeat(4, var(--thumb-size));
     }
 }
 
 @media (max-width: 1087px) {
-    #thumb-wrapper {
+    #content-grid {
         grid-template-columns: repeat(3, var(--thumb-size));
     }
 }
 
 @media (max-width: 870px) {
-    #thumb-wrapper {
+    #content-grid {
         grid-template-columns: repeat(2, var(--thumb-size));
     }
 }
@@ -135,13 +137,13 @@ body {
         display: none;
     }
 
-    #thumb-wrapper {
-        grid-template-columns: repeat(3, 1fr);
+    #content-grid {
+        grid-template-columns: repeat(3, var(--thumb-size));
     }
 }
 
 @media only screen and (max-width: 500px) {
-    #thumb-wrapper {
-        grid-template-columns: repeat(2, 1fr);
+    #content-grid {
+        grid-template-columns: repeat(2, var(--thumb-size));
     }
 }

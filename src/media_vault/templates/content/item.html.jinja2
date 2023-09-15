@@ -4,11 +4,11 @@
 
 {% if item.type == 'image' %}
 
-<img src="{{ item.href }}" alt="">
+<img src="{{ item.href }}" id="item" alt="">
 
 {% elif item.type == 'video' %}
 
-<video controls autoplay>
+<video id="item" controls autoplay>
     <source src="{{ item.href }}" type="video/{{ item.suffix }}">
     Your browser does not support the video tag.
 </video>
@@ -16,6 +16,5 @@
 {% else %}
 unknown
 {% endif %}
-
 
 {% endblock main %}
