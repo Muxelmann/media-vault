@@ -15,6 +15,7 @@ docker buildx build \
 Run using:
 
 ```
+docker buildx create --use default
 docker run \
     -v <HOST_DATA_PATH>:/data:ro \
     -e FLASK_SECRET=<SOME_SECRET> \
