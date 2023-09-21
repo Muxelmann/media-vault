@@ -20,15 +20,26 @@ window.onresize = loadLazyThumbs;
 
 
 function nextPage() {
-    console.log("-->");
+    meta_elements = document.getElementsByTagName("meta")
+    for (let i = 0; i < meta_elements.length; i++) {
+        const element = meta_elements[i];
+        if (element.getAttribute("name") == "neighbor-next") {
+            window.location.href = element.getAttribute("href");
+        }
+    }
 }
 
 function previousPage() {
-    console.log("<--");
+    meta_elements = document.getElementsByTagName("meta")
+    for (let i = 0; i < meta_elements.length; i++) {
+        const element = meta_elements[i];
+        if (element.getAttribute("name") == "neighbor-previous") {
+            window.location.href = element.getAttribute("href");
+        }
+    }
 }
 
 document.addEventListener('keyup', (event) => {
-    console.log(event.key);
     switch (event.key) {
         case 'ArrowRight':
             nextPage();
@@ -65,14 +76,21 @@ function handleTouchMove(evt) {
 function handleTouchEnd(evt) {
     var xDiff = xDown - xUp;
     var yDiff = yDown - yUp;
+    let threshold = 150;
 
     if (Math.abs(xDiff) > Math.abs(yDiff)) {/*most significant*/
+        if (Math.abs(xDiff) < threshold)
+            return;
         if (xDiff > 0) {
             /* right swipe */
+            nextPage();
         } else {
             /* left swipe */
+            previousPage();
         }
     } else {
+        if (Math.abs(yDiff) < threshold)
+            return;
         if (yDiff > 0) {
             /* down swipe */
         } else {

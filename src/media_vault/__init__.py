@@ -63,12 +63,13 @@ def send_raw(full_path: str) -> str:
         return abort(404)
     return send_file(full_path)
 
+def get_file_list(full_path: str) -> list[str]:
+    return [f for f in os.listdir(full_path) if f[0] != '.']
+
 def send_list(full_path: str, content_path: str, data_path: str) -> str:
     content_list = []
-    for file in os.listdir(full_path):
-        if file[0] == '.':
-            continue
-    
+    for file in get_file_list(full_path):
+        
         content_list.append({
             'name': os.path.splitext(file)[0],
             'href': url_for('get_content', content_path=os.path.join(content_path, file)),
@@ -80,7 +81,23 @@ def send_list(full_path: str, content_path: str, data_path: str) -> str:
     
     return render_template('content/list.html.jinja2', content_list=content_list)
 
-def send_item(content_path: str) -> str:
+def get_neighbors(full_path: str, content_path: str) -> tuple[str | None]:
+    content_dir_path, _ = os.path.split(content_path)
+    full_dir_path, file_name = os.path.split(full_path)
+    file_list = get_file_list(full_dir_path)
+    idx = file_list.index(file_name)
+
+    previous_href, next_href = None, None
+    if idx > 0:
+        content_path = os.path.join(content_dir_path, file_list[idx-1])
+        previous_href = url_for('get_content', content_path=content_path)
+    if idx < len(file_list) - 1:
+        content_path = os.path.join(content_dir_path, file_list[idx+1])
+        next_href = url_for('get_content', content_path=content_path)
+    
+    return previous_href, next_href
+
+def send_item(full_path: str, content_path: str) -> str:
     item = {
         'suffix': os.path.splitext(content_path)[1].replace('.', '')
     }
@@ -92,6 +109,8 @@ def send_item(content_path: str) -> str:
     
     item['href'] = url_for('get_content', content_path=content_path, raw=True)
 
+    item['neighbors'] = get_neighbors(full_path, content_path)
+
     return render_template('content/item.html.jinja2', item=item)
 
 def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
@@ -102,6 +121,9 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
     @app.route("/", defaults={'content_path': ""})
     @app.route("/<path:content_path>")
     def get_content(content_path: str) -> str:
+        while len(content_path) > 0 and content_path[-1] == os.path.sep:
+            content_path = content_path[:-1]
+
         full_path = os.path.join(data_path, content_path)
         thumb_path = os.path.join(tmp_path, content_path)
 
@@ -119,6 +141,6 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
         if os.path.isdir(full_path):
             return send_list(full_path, content_path, data_path)
         
-        return send_item(content_path)
+        return send_item(full_path, content_path)
 
     return app
