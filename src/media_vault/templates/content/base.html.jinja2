@@ -2,14 +2,12 @@
 
 {% block html_body %}
 
-<div id="top">
-    <div class="trace-back">
-        <a href="/">home</a>
-        {% for crumb in g.breadcrumbs %}
-        {% set url = g.breadcrumbs[:loop.index] | join('/') %}
-        <a href="{{ url_for('get_content', content_path=url) }}">{{ crumb }}</a>
-        {% endfor %}
-    </div>
+<div id="top" class="trace-back">
+    <a href="/">home</a>
+    {% for crumb in g.breadcrumbs %}
+    {% set url = g.breadcrumbs[:loop.index] | join('/') %}
+    <span>&gt;</span><a href="{{ url_for('get_content', content_path=url) }}">{{ crumb }}</a>
+    {% endfor %}
 </div>
 
 <div class="main-wrapper">

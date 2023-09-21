@@ -10,8 +10,7 @@ function loadLazyThumbs() {
         }
     }
 }
-if (contentWrapper != null)
-    contentWrapper.onscroll = loadLazyThumbs;
+document.body.onscroll = loadLazyThumbs;
 window.onload = loadLazyThumbs;
 window.onresize = loadLazyThumbs;
 
