@@ -1,50 +1,23 @@
-from flask import Flask, render_template, redirect, url_for, abort, send_file, request, g
+from flask import Flask, render_template, url_for, abort, send_file, request, g
 import os
-from PIL import Image, ImageSequence, ImageFile
-import subprocess
 
-ImageFile.LOAD_TRUNCATED_IMAGES = True
-
-def make_thumb(full_path: str, thumb_path:str) -> None:
-
-    # Make folder structure to save thumb
-    base_path = os.path.split(thumb_path)[0]
-    if not os.path.exists(base_path):
-        os.makedirs(base_path)
-    
-    # Generate thumb
-    if os.path.splitext(full_path)[1].lower() in ['.mp4', '.m4v']:
-        subprocess.call([
-            'ffmpeg',
-            '-i', full_path,
-            '-ss', '00:00:00.000',
-            '-vframes', '1',
-            # '-y',
-            thumb_path
-        ])
-    else:
-        with Image.open(full_path) as img:
-
-            aspect_ratio = img.width / img.height
-            if aspect_ratio > 1:
-                new_height = 200
-                new_width = int(200 * aspect_ratio)
-            else:
-                new_height = int(200 / aspect_ratio)
-                new_width = 200
-                
-            if hasattr(img, "is_animated") and img.is_animated:
-                frames = ImageSequence.Iterator(img)
-                frames = [f.resize((new_width, new_height)) for f in frames]
-                out_img = frames[0]
-                out_img.info = img.info
-                out_img.save(thumb_path, save_all=True, append_images=frames[1:], optimize=True)
-
-            else:
-                out_img = img.resize((new_width, new_height))
-                out_img.save(thumb_path)
+from . import utils
         
 def send_thumb(full_path: str, thumb_path: str) -> str:
+    """Sends a thumb version of the actual media file.
+
+    If the thumb does not exist, it will be generated upon first call.
+    If media file is a dir (i.e., not a file as such), the function returns a 404 error response.
+    The thumb of a video file is stored as a PNG, despite the file suffix in the URL indicating e.g., MP4.
+
+    Args:
+        full_path (str): full path e.g. starting with `/user/...` to the actual media file
+        thumb_path (str): full path e.g. starting with `/tmp/...` to the thumb media file
+
+    Returns:
+        str: Flask response string of `send_file()`
+    """
+
     if not os.path.isfile(full_path):
         return abort(404)
     
@@ -54,26 +27,49 @@ def send_thumb(full_path: str, thumb_path: str) -> str:
         thumb_path = thumb_path_without_suffix + '.png'
 
     if not os.path.exists(thumb_path):
-        make_thumb(full_path, thumb_path)
+        utils.make_thumb(full_path, thumb_path)
 
     return send_file(thumb_path)
 
 def send_raw(full_path: str) -> str:
+    """Sends the actual media file.
+
+    If media file is a dir (i.e., not a file as such), the function returns a 404 error response.
+
+    Args:
+        full_path (str): full path e.g. starting with `/user/...` to the actual media file
+
+    Returns:
+        str: Flask response string of `send_file()`
+    """
+
     if not os.path.isfile(full_path):
         return abort(404)
     return send_file(full_path)
 
-def get_file_list(full_path: str) -> list[str]:
-    return [f for f in os.listdir(full_path) if f[0] != '.']
-
 def send_list(full_path: str, content_path: str, data_path: str) -> str:
+    """Sends a page corresponding list of files at the current directory.
+
+    A `content_list` variable is made available to the template, wherein each element
+    comprises parameters like `name`, `href` (url) and `thumb` (url), necessary for
+    displaying the list grid.
+
+    Args:
+        full_path (str): full path e.g. starting with `/user/...` to the actual media file
+        content_path (str): path to media file according to URL
+        data_path (str): full path e.g. starting with `/user/...` to the content directory
+
+    Returns:
+        str: Flask response string of `render_template()` with `content_path`
+    """
+
     content_list = []
-    for file in get_file_list(full_path):
+    for file in utils.get_file_list(full_path):
         
         content_list.append({
             'name': os.path.splitext(file)[0],
-            'href': url_for('get_content', content_path=os.path.join(content_path, file)),
-            'thumb': url_for('get_content', content_path=os.path.join(content_path, file), thumb=True)
+            'href': url_for('.get_content', content_path=os.path.join(content_path, file)),
+            'thumb': url_for('.get_content', content_path=os.path.join(content_path, file), thumb=True)
         })
 
         if os.path.isdir(os.path.join(data_path, content_path, file)):
@@ -81,23 +77,19 @@ def send_list(full_path: str, content_path: str, data_path: str) -> str:
     
     return render_template('content/list.html.jinja2', content_list=content_list)
 
-def get_neighbors(full_path: str, content_path: str) -> tuple[str | None]:
-    content_dir_path, _ = os.path.split(content_path)
-    full_dir_path, file_name = os.path.split(full_path)
-    file_list = get_file_list(full_dir_path)
-    idx = file_list.index(file_name)
-
-    previous_href, next_href = None, None
-    if idx > 0:
-        content_path = os.path.join(content_dir_path, file_list[idx-1])
-        previous_href = url_for('get_content', content_path=content_path)
-    if idx < len(file_list) - 1:
-        content_path = os.path.join(content_dir_path, file_list[idx+1])
-        next_href = url_for('get_content', content_path=content_path)
-    
-    return previous_href, next_href
-
 def send_item(full_path: str, content_path: str) -> str:
+    """Sends a page for displaying the media file.
+
+    An `item` variable is made available to the template.
+    It contains arguments like `suffix`, `type`, `href` (url), `neighbors` ([url | None, url | None]).
+
+    Args:
+        full_path (str): full path e.g. starting with `/user/...` to the actual media file
+        content_path (str): path to media file according to URL
+
+    Returns:
+        str: _description_
+    """
     item = {
         'suffix': os.path.splitext(content_path)[1].replace('.', '')
     }
@@ -107,11 +99,16 @@ def send_item(full_path: str, content_path: str) -> str:
     else:
         item['type'] = 'image'
     
-    item['href'] = url_for('get_content', content_path=content_path, raw=True)
+    item['href'] = url_for('.get_content', content_path=content_path, raw=True)
 
-    item['neighbors'] = get_neighbors(full_path, content_path)
+    item['neighbors'] = utils.get_neighbors(full_path, content_path)
+    for idx, cp in enumerate(item['neighbors']):
+        if cp is None:
+            continue
+        item['neighbors'][idx] = url_for('.get_content', content_path=cp)
 
     return render_template('content/item.html.jinja2', item=item)
+
 
 def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
     app = Flask(__name__)
