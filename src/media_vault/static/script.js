@@ -24,7 +24,7 @@ function nextPage() {
     for (let i = 0; i < meta_elements.length; i++) {
         const element = meta_elements[i];
         if (element.getAttribute("name") == "neighbor-next") {
-            window.location.href = element.getAttribute("href");
+            window.open(element.getAttribute("href"), "_self");
         }
     }
 }
@@ -34,7 +34,7 @@ function previousPage() {
     for (let i = 0; i < meta_elements.length; i++) {
         const element = meta_elements[i];
         if (element.getAttribute("name") == "neighbor-previous") {
-            window.location.href = element.getAttribute("href");
+            window.open(element.getAttribute("href"), "_self");
         }
     }
 }
@@ -58,24 +58,17 @@ document.addEventListener('keyup', (event) => {
 
 var xDown = null;
 var yDown = null;
-var xUp = null;
-var yUp = null;
 
 function handleTouchStart(evt) {
-    const firstTouch = evt.touches[0];
+    const firstTouch = evt.changedTouches[0];
     xDown = firstTouch.clientX;
     yDown = firstTouch.clientY;
 };
 
-function handleTouchMove(evt) {
-    const lastTouch = evt.touches[0];
-    xUp = lastTouch.clientX;
-    yUp = lastTouch.clientY;
-}
-
 function handleTouchEnd(evt) {
-    var xDiff = xDown - xUp;
-    var yDiff = yDown - yUp;
+    const lastTouch = evt.changedTouches[0];
+    var xDiff = xDown - lastTouch.clientX;
+    var yDiff = yDown - lastTouch.clientY;
     let threshold = 150;
 
     if (Math.abs(xDiff) > Math.abs(yDiff)) {/*most significant*/
@@ -101,6 +94,5 @@ function handleTouchEnd(evt) {
 
 if (document.getElementById('item') != null) {
     document.addEventListener('touchstart', handleTouchStart, false);
-    document.addEventListener('touchmove', handleTouchMove, false);
     document.addEventListener('touchend', handleTouchEnd, false);
 }
