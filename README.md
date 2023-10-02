@@ -5,6 +5,7 @@ A simple media library display service.
 Built using:
 
 ```
+docker buildx create --use default
 docker buildx build \
     --push \
     --platform linux/arm64/v8,linux/arm/v7,linux/amd64 \
@@ -23,4 +24,4 @@ docker run \
     muxelmann/media-vault
 ```
 
-The layout is inspired and made to match that of [Synology Photos](https://www.synology.com/en-en/dsm/feature/photos). But several features are missing and this service is no way near as nice looking.
+The layout is inspired by that of [Synology Photos](https://www.synology.com/en-en/dsm/feature/photos). But several features are missing and this service is no way near as nice looking.
