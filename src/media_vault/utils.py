@@ -13,7 +13,9 @@ def get_file_list(full_path: str) -> list[str]:
     Returns:
         list[str]: the list of file/directory names at full path
     """
-    return [f for f in os.listdir(full_path) if f[0] != '.']
+    file_list = [f for f in os.listdir(full_path) if f[0] != '.']
+    file_list.sort()
+    return file_list
 
 def make_thumb(full_path: str, thumb_path: str) -> None:
     """Generates thumbs for a given media file.
