@@ -6,6 +6,7 @@
 :root {
     --thumb-size: 200px;
     --top-height: 3rem;
+    --main-padding: 1rem;
 }
 
 body {
@@ -41,13 +42,12 @@ body {
 
 .main-wrapper {
     position: relative;
+    padding: var(--main-padding);
     display: flex;
-    height: calc(100vh - var(--top-height));
     justify-content: center;
 }
 
 .main-wrapper>* {
-    padding: 1rem;
     overflow-y: auto;
     object-fit: contain;
 }
@@ -82,6 +82,10 @@ body {
 
 #content-grid .lazy-thumb {
     background-image: none !important;
+}
+
+#item {
+    max-height: calc(100vh - var(--top-height) - 2*var(--main-padding));
 }
 
 /* 217px delta */
