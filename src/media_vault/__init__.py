@@ -1,6 +1,7 @@
 from flask import Flask, render_template, url_for, abort, send_file, request, g, redirect
 from werkzeug.utils import secure_filename
 import os
+import shutil
 
 from . import utils
 
@@ -29,7 +30,8 @@ def send_thumb(full_path: str, thumb_path: str) -> str:
         thumb_path = thumb_path_without_suffix + '.png'
 
     if not os.path.exists(thumb_path):
-        utils.make_thumb(full_path, thumb_path)
+        if not utils.make_thumb(full_path, thumb_path):
+            return abort(404)
 
     return send_file(thumb_path)
 
@@ -95,16 +97,19 @@ def send_item(full_path: str, content_path: str) -> str:
     Returns:
         str: _description_
     """
+    suffix = os.path.splitext(content_path)[1]
     item = {
-        'suffix': os.path.splitext(content_path)[1].replace('.', '')
+        'suffix': suffix.replace('.', '')
     }
     if item['suffix'] == 'mov':
         item['suffix'] = 'mp4'
 
-    if os.path.splitext(content_path)[1] in utils.VIDEO_SUFFIX:
+    if suffix in utils.VIDEO_SUFFIX:
         item['type'] = 'video'
-    else:
+    elif suffix in utils.IMAGE_SUFFIX:
         item['type'] = 'image'
+    else:
+        item['type'] = 'unknown'
 
     item['href'] = url_for('.get_content', content_path=content_path, raw=True)
 
@@ -180,30 +185,57 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
             content_path (str): The path to the content managed by this route.
 
         Returns:
-            str: Redirection to new folder, `OK` acknowledgemet or 500 error
+            str: Redirection to new folder, `OK` acknowledgemet or default redirection
         """
+        default_redirect = redirect(
+            url_for('.get_content', content_path=content_path))
 
         if request.args.get('upload', None) is not None:
+            if 'file' not in request.files:
+                return default_redirect
+
             file = request.files['file']
             full_path = os.path.join(
                 data_path, content_path, secure_filename(file.filename))
             file.save(full_path)
-            return "OK"
 
         elif request.args.get('new_folder', None) is not None:
             folder_name = request.form.get('folder-name')
             if folder_name is None:
-                return abort(500)
+                return default_redirect
 
             folder_name = secure_filename(folder_name)
 
             full_path = os.path.join(data_path, content_path, folder_name)
 
             if os.path.exists(full_path):
-                return abort(500)
+                return default_redirect
 
             os.makedirs(full_path)
             return redirect(url_for('.get_content', content_path=os.path.join(content_path, folder_name)))
 
-        return redirect(url_for('.get_content', content_path=content_path))
+        elif request.args.get('delete') is not None:
+            item_name = request.form.get('item-name')
+
+            full_path = os.path.join(data_path, content_path)
+
+            if item_name is None:
+                return default_redirect
+
+            if item_name == '':  # delete this file (not folder)
+                if os.path.isdir(full_path):
+                    return default_redirect
+                if os.path.exists(full_path):
+                    os.remove(full_path)
+
+                return redirect(url_for('.get_content', content_path=os.path.split(content_path)[0]))
+
+            # delete file or folder
+            full_path = os.path.join(full_path, item_name)
+            if os.path.isdir(full_path):
+                shutil.rmtree(full_path)
+            else:
+                os.remove(full_path)
+
+        return default_redirect
     return app

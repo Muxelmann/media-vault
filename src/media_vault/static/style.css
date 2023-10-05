@@ -38,9 +38,9 @@ body {
     background-color: black;
 }
 
-#top>*,
-#manager>* {
-    margin-left: 0.5rem;
+#top,
+#manager {
+    gap: 0.5rem;
 }
 
 #manager-open {
@@ -61,7 +61,7 @@ body {
 
 #manager {
     position: absolute;
-    left: 1.5rem;
+    left: 2rem;
     top: calc(-1 * var(--top-height));
     padding: 0;
     background-color: #ffffff;
@@ -73,6 +73,15 @@ body {
     display: flex;
 
     transition: top 100ms ease-in-out;
+}
+
+#manager form {
+    background-color: #ccc;
+    padding: 0 0.5rem;
+    height: calc(var(--top-height) - 1rem);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 #manager-open:checked~#manager {

@@ -5,6 +5,7 @@ from PIL import Image, ImageSequence, ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 VIDEO_SUFFIX = [f'.{s}' for s in ('mov', 'mp4', 'm4v')]
+IMAGE_SUFFIX = [f'.{s}' for s in ('jpeg', 'jpg', 'png', 'gif')]
 
 
 def get_file_list(full_path: str) -> list[str]:
@@ -21,7 +22,7 @@ def get_file_list(full_path: str) -> list[str]:
     return file_list
 
 
-def make_thumb(full_path: str, thumb_path: str) -> None:
+def make_thumb(full_path: str, thumb_path: str) -> bool:
     """Generates thumbs for a given media file.
 
     If a file exists at the full path, a thumb version thereof will be stored at teh thumb path.
@@ -37,7 +38,8 @@ def make_thumb(full_path: str, thumb_path: str) -> None:
         os.makedirs(base_path)
 
     # Generate thumb
-    if os.path.splitext(full_path)[1].lower() in VIDEO_SUFFIX:
+    suffix = os.path.splitext(full_path)[1].lower()
+    if suffix in VIDEO_SUFFIX:
         subprocess.call([
             'ffmpeg',
             '-i', full_path,
@@ -46,7 +48,8 @@ def make_thumb(full_path: str, thumb_path: str) -> None:
             '-y',
             thumb_path
         ])
-    else:
+        return True
+    elif suffix in IMAGE_SUFFIX:
         with Image.open(full_path) as img:
 
             aspect_ratio = img.width / img.height
@@ -68,6 +71,10 @@ def make_thumb(full_path: str, thumb_path: str) -> None:
             else:
                 out_img = img.resize((new_width, new_height))
                 out_img.save(thumb_path)
+
+            return True
+
+    return False
 
 
 def get_neighbors(full_path: str, content_path: str) -> list[str | None]:
