@@ -2,16 +2,41 @@
 
 {% block html_body %}
 
-<div id="top" class="trace-back">
+<div id="top">
+    <input type="checkbox" name="" id="manager-open">
+
+
     <a href="/">home</a>
+    {% if g.breadcrumbs %}
     {% for crumb in g.breadcrumbs %}
     {% set url = g.breadcrumbs[:loop.index] | join('/') %}
     <span>&gt;</span><a href="{{ url_for('get_content', content_path=url) }}">{{ crumb }}</a>
     {% endfor %}
+    {% endif %}
+
+    <div id="manager">
+        {% set url = g.breadcrumbs | join('/') %}
+        <form action="{{ url_for('manage', content_path=url, new_folder=True ) }}" method="post">
+            <input type="text" name="folder-name">
+            <input type="submit" value="add folder">
+        </form>
+        <form action="{{ url_for('manage', content_path=url, delete=True ) }}" method="post">
+            <input type="text" name="item-name">
+            <input type="submit" value="delete">
+        </form>
+    </div>
 </div>
 
-<div class="main-wrapper">
+<div id="main-wrapper">
     {% block main %}{% endblock main %}
+</div>
+
+<div id="drop-wrapper" class="hidden">
+    <span>To upload, drop file/s now.</span>
+    {% set url = g.breadcrumbs | join('/') %}
+    <div id="drop-field" src="{{ url_for('manage', content_path=url, upload=True) }}"></div>
+    <progress id="progress-bar" max=100 value=0 class="hidden"></progress>
+    <span id="done-indicator" class="hidden">Upload finished! Page will refresh in 3 seconds.</span>
 </div>
 
 <script src="{{ url_for('static', filename='script.js') }}"></script>

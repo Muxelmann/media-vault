@@ -1,8 +1,10 @@
-from flask import Flask, render_template, url_for, abort, send_file, request, g
+from flask import Flask, render_template, url_for, abort, send_file, request, g, redirect
+from werkzeug.utils import secure_filename
 import os
 
 from . import utils
-        
+
+
 def send_thumb(full_path: str, thumb_path: str) -> str:
     """Sends a thumb version of the actual media file.
 
@@ -20,16 +22,17 @@ def send_thumb(full_path: str, thumb_path: str) -> str:
 
     if not os.path.isfile(full_path):
         return abort(404)
-    
+
     # Make sure only images are sent as thumb
     thumb_path_without_suffix, suffix = os.path.splitext(thumb_path)
-    if suffix.lower() in ['.mp4', '.m4v']:
+    if suffix.lower() in utils.VIDEO_SUFFIX:
         thumb_path = thumb_path_without_suffix + '.png'
 
     if not os.path.exists(thumb_path):
         utils.make_thumb(full_path, thumb_path)
 
     return send_file(thumb_path)
+
 
 def send_raw(full_path: str) -> str:
     """Sends the actual media file.
@@ -46,6 +49,7 @@ def send_raw(full_path: str) -> str:
     if not os.path.isfile(full_path):
         return abort(404)
     return send_file(full_path)
+
 
 def send_list(full_path: str, content_path: str, data_path: str) -> str:
     """Sends a page corresponding list of files at the current directory.
@@ -65,7 +69,7 @@ def send_list(full_path: str, content_path: str, data_path: str) -> str:
 
     content_list = []
     for file in utils.get_file_list(full_path):
-        
+
         content_list.append({
             'name': os.path.splitext(file)[0],
             'href': url_for('.get_content', content_path=os.path.join(content_path, file)),
@@ -74,8 +78,9 @@ def send_list(full_path: str, content_path: str, data_path: str) -> str:
 
         if os.path.isdir(os.path.join(data_path, content_path, file)):
             content_list[-1]['thumb'] = None
-    
+
     return render_template('content/list.html.jinja2', content_list=content_list)
+
 
 def send_item(full_path: str, content_path: str) -> str:
     """Sends a page for displaying the media file.
@@ -93,12 +98,14 @@ def send_item(full_path: str, content_path: str) -> str:
     item = {
         'suffix': os.path.splitext(content_path)[1].replace('.', '')
     }
-    
-    if item['suffix'] == 'mp4':
+    if item['suffix'] == 'mov':
+        item['suffix'] = 'mp4'
+
+    if os.path.splitext(content_path)[1] in utils.VIDEO_SUFFIX:
         item['type'] = 'video'
     else:
         item['type'] = 'image'
-    
+
     item['href'] = url_for('.get_content', content_path=content_path, raw=True)
 
     item['neighbors'] = utils.get_neighbors(full_path, content_path)
@@ -118,6 +125,22 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
     @app.route("/", defaults={'content_path': ""})
     @app.route("/<path:content_path>")
     def get_content(content_path: str) -> str:
+        """A route returning content at the content path.
+
+        If the content path is a directory, a list of folders is returned.
+        If the content path is a file (like an image or video), a page showing its content is returned.
+
+        When passing a GET argument of:
+        - `raw` the raw file is returned.
+        - `thumb` a thumbnail is returned.
+
+        Args:
+            content_path (str): The path to the content returned by this route.
+
+        Returns:
+            str: Response page of a list of folders or the content of an item
+        """
+
         while len(content_path) > 0 and content_path[-1] == os.path.sep:
             content_path = content_path[:-1]
 
@@ -128,6 +151,8 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
             return abort(404)
 
         g.breadcrumbs = content_path.split('/')
+        if g.breadcrumbs[0] == '':
+            del g.breadcrumbs
 
         if request.args.get('raw', default=None) is not None:
             return send_raw(full_path)
@@ -137,7 +162,48 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
 
         if os.path.isdir(full_path):
             return send_list(full_path, content_path, data_path)
-        
+
         return send_item(full_path, content_path)
 
+    @app.route("/:/", defaults={'content_path': ""}, methods=['POST'])
+    @app.route("/:/<path:content_path>", methods=['POST'])
+    def manage(content_path: str) -> str:
+        """A POST-only route to upload files, create folders and delete items at the content path.
+
+        When passing a GET argument of:
+
+        - `upload` one or more passed files can be uploaded to the content path.
+        - `new_folder` a folder of `folder-name` (form value) is added.
+        - `delete` an folder or file of `item-name` (form value) is deleted.
+
+        Args:
+            content_path (str): The path to the content managed by this route.
+
+        Returns:
+            str: Redirection to new folder, `OK` acknowledgemet or 500 error
+        """
+
+        if request.args.get('upload', None) is not None:
+            file = request.files['file']
+            full_path = os.path.join(
+                data_path, content_path, secure_filename(file.filename))
+            file.save(full_path)
+            return "OK"
+
+        elif request.args.get('new_folder', None) is not None:
+            folder_name = request.form.get('folder-name')
+            if folder_name is None:
+                return abort(500)
+
+            folder_name = secure_filename(folder_name)
+
+            full_path = os.path.join(data_path, content_path, folder_name)
+
+            if os.path.exists(full_path):
+                return abort(500)
+
+            os.makedirs(full_path)
+            return redirect(url_for('.get_content', content_path=os.path.join(content_path, folder_name)))
+
+        return redirect(url_for('.get_content', content_path=content_path))
     return app
