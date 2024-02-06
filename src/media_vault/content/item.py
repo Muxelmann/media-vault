@@ -1,5 +1,4 @@
 import os
-# import subprocess
 import av
 from PIL import Image, ImageSequence, ImageFile
 from flask import abort, send_file, url_for
@@ -107,8 +106,12 @@ class Item:
     def make_thumb(self) -> str | None:
         """Generates thumbs for a given media file.
 
+
         If a file exists at the full path, a thumb version thereof will be stored at teh thumb path.
         If the thumb file already exists, it is not overwritten.
+
+        TODO: change back to return bool for success since video is re-encoded/transcoding (not remuxed!)
+        TODO: maybe try class av.video.reformatter.VideoReformatter instead of keyframe based re-encoding
 
         Returns:
             str | None: Path to the actual thumbnail or None if it cannot be generated
@@ -122,7 +125,8 @@ class Item:
 
         if self.type == 'video':
             # Thumbnail of video is an animated gif
-            actual_thumb_path = os.path.splitext(self.thumb_path)[0] + '.gif'
+            # actual_thumb_path = os.path.splitext(self.thumb_path)[0] + '.gif'
+            actual_thumb_path = self.thumb_path
         elif self.type == 'image':
             # Thumbnail of image is same type
             actual_thumb_path = self.thumb_path
@@ -135,41 +139,55 @@ class Item:
 
         # Generate thumb
         if self.type == 'video':
-            with av.open(self.full_path) as container:
-                # Test if a video is present
-                if len(container.streams.video) == 0:
-                    return False
+            with av.open(self.full_path) as in_container:
+                with av.open(actual_thumb_path, 'w') as out_container:
 
-                # Only extract subset of frames i.e. Keyframes
-                stream = container.streams.video[0]
-                stream.codec_context.skip_frame = "NONKEY"
+                    # Test if a video is present
+                    if len(in_container.streams.video) == 0:
+                        return False
 
-                # Rescale smaller dimension to THUMB_MIN_SIZE
-                old_height = stream.codec_context.height
-                old_width = stream.codec_context.width
+                    # Only extract subset of frames i.e. Keyframes
+                    in_stream = in_container.streams.video[0]
+                    in_stream.codec_context.skip_frame = "NONKEY"
 
-                aspect_ratio = old_width / old_height
-                if aspect_ratio > 1:
-                    new_height = Item.THUMB_MIN_SIZE
-                    new_width = int(Item.THUMB_MIN_SIZE * aspect_ratio)
-                else:
-                    new_height = int(Item.THUMB_MIN_SIZE / aspect_ratio)
-                    new_width = Item.THUMB_MIN_SIZE
+                    # Rescale smaller dimension to THUMB_MIN_SIZE
+                    old_height = in_stream.codec_context.height
+                    old_width = in_stream.codec_context.width
 
-                thumb_frames = []
-                for frame in container.decode(stream):
-                    thumb_frames.append(
-                        frame.to_image().resize((new_width, new_height))
-                    )
+                    aspect_ratio = old_width / old_height
+                    if aspect_ratio > 1:
+                        new_height = Item.THUMB_MIN_SIZE
+                        new_width = int(Item.THUMB_MIN_SIZE * aspect_ratio)
+                    else:
+                        new_height = int(Item.THUMB_MIN_SIZE / aspect_ratio)
+                        new_width = Item.THUMB_MIN_SIZE
 
-                thumb_frames[0].save(
-                    actual_thumb_path,
-                    save_all=True,
-                    append_images=thumb_frames[1:],
-                    optimize=True,
-                    duration=len(thumb_frames)*5,
-                    loop=0
-                )
+                    if new_height % 2 != 0:
+                        new_height += 1
+                    if new_width % 2 != 0:
+                        new_width += 1
+
+                    # out_stream = out_container.add_stream(template=in_stream)
+                    codec_name = in_stream.codec_context.name
+                    out_stream = out_container.add_stream(
+                        codec_name, str(1))
+                    out_stream.width = new_width
+                    out_stream.height = new_height
+                    out_stream.pix_fmt = in_stream.codec_context.pix_fmt
+
+                    for in_frame in in_container.decode(in_stream):
+                        img = in_frame.to_image().resize((new_width, new_height))
+
+                        # Note: to_image and from_image is not required in this specific example.
+                        out_frame = av.VideoFrame.from_image(img)
+                        out_packet = out_stream.encode(
+                            out_frame)  # Encode video frame
+                        # "Mux" the encoded frame (add the encoded frame to MP4 file).
+                        out_container.mux(out_packet)
+
+                    # Flush the encoder
+                    out_packet = out_stream.encode(None)
+                    out_container.mux(out_packet)
 
         elif self.type == 'image':
             with Image.open(self.full_path) as img:

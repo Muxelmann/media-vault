@@ -6,7 +6,16 @@
     {% for item in item_list %}
     <li class="item">
         <a href="{{ url_for('get_content', content_path=item.content_path) }}">
+            {% if item.type == 'image' %}
             <img class="thumb" src="{{ item.thumb_url }}" alt="{{ item.file_name }}">
+            {% elif item.type == 'video'%}
+            <video class="thumb" onloadeddata="this.currentTime=this.duration/2;"
+                onmouseover="this.currentTime=0;this.play()"
+                onmouseout="this.pause();this.currentTime=this.duration/2;">
+                <source src="{{ item.thumb_url }}" type="video/{{ item.suffix }}">
+                Your browser does not support the video tag.
+            </video>
+            {% endif %}
             <span class="thumb-name">{{item.name}}</span>
         </a>
     </li>
