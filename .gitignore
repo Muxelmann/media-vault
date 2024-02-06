@@ -1,7 +1,8 @@
 **/.DS_Store
 **/.venv
 **/.vscode
-**/__pycache__
 **/.dockerignore
+**/.python-version
+**/__pycache__
 **/data
 **/tmp
