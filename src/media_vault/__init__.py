@@ -3,129 +3,26 @@ from werkzeug.utils import secure_filename
 import os
 import shutil
 
-from . import utils
-
-
-def send_thumb(full_path: str, thumb_path: str) -> str:
-    """Sends a thumb version of the actual media file.
-
-    If the thumb does not exist, it will be generated upon first call.
-    If media file is a dir (i.e., not a file as such), the function returns a 404 error response.
-    The thumb of a video file is stored as a PNG, despite the file suffix in the URL indicating e.g., MP4.
-
-    Args:
-        full_path (str): full path e.g. starting with `/user/...` to the actual media file
-        thumb_path (str): full path e.g. starting with `/tmp/...` to the thumb media file
-
-    Returns:
-        str: Flask response string of `send_file()`
-    """
-
-    if not os.path.isfile(full_path):
-        return abort(404)
-
-    # Make sure only images are sent as thumb
-    thumb_path_without_suffix, suffix = os.path.splitext(thumb_path)
-    if suffix.lower() in utils.VIDEO_SUFFIX:
-        thumb_path = thumb_path_without_suffix + '.png'
-
-    if not os.path.exists(thumb_path):
-        if not utils.make_thumb(full_path, thumb_path):
-            return abort(404)
-
-    return send_file(thumb_path)
-
-
-def send_raw(full_path: str) -> str:
-    """Sends the actual media file.
-
-    If media file is a dir (i.e., not a file as such), the function returns a 404 error response.
-
-    Args:
-        full_path (str): full path e.g. starting with `/user/...` to the actual media file
-
-    Returns:
-        str: Flask response string of `send_file()`
-    """
-
-    if not os.path.isfile(full_path):
-        return abort(404)
-    return send_file(full_path)
-
-
-def send_list(full_path: str, content_path: str, data_path: str) -> str:
-    """Sends a page corresponding list of files at the current directory.
-
-    A `content_list` variable is made available to the template, wherein each element
-    comprises parameters like `name`, `href` (url) and `thumb` (url), necessary for
-    displaying the list grid.
-
-    Args:
-        full_path (str): full path e.g. starting with `/user/...` to the actual media file
-        content_path (str): path to media file according to URL
-        data_path (str): full path e.g. starting with `/user/...` to the content directory
-
-    Returns:
-        str: Flask response string of `render_template()` with `content_path`
-    """
-
-    content_list = []
-    for file in utils.get_file_list(full_path):
-
-        content_list.append({
-            'name': os.path.splitext(file)[0],
-            'href': url_for('.get_content', content_path=os.path.join(content_path, file)),
-            'thumb': url_for('.get_content', content_path=os.path.join(content_path, file), thumb=True)
-        })
-
-        if os.path.isdir(os.path.join(data_path, content_path, file)):
-            content_list[-1]['thumb'] = None
-
-    return render_template('content/list.html.jinja2', content_list=content_list)
-
-
-def send_item(full_path: str, content_path: str) -> str:
-    """Sends a page for displaying the media file.
-
-    An `item` variable is made available to the template.
-    It contains arguments like `suffix`, `type`, `href` (url), `neighbors` ([url | None, url | None]).
-
-    Args:
-        full_path (str): full path e.g. starting with `/user/...` to the actual media file
-        content_path (str): path to media file according to URL
-
-    Returns:
-        str: _description_
-    """
-    suffix = os.path.splitext(content_path)[1]
-    item = {
-        'suffix': suffix.replace('.', '')
-    }
-    if item['suffix'] == 'mov':
-        item['suffix'] = 'mp4'
-
-    if suffix in utils.VIDEO_SUFFIX:
-        item['type'] = 'video'
-    elif suffix in utils.IMAGE_SUFFIX:
-        item['type'] = 'image'
-    else:
-        item['type'] = 'unknown'
-
-    item['href'] = url_for('.get_content', content_path=content_path, raw=True)
-
-    item['neighbors'] = utils.get_neighbors(full_path, content_path)
-    for idx, cp in enumerate(item['neighbors']):
-        if cp is None:
-            continue
-        item['neighbors'][idx] = url_for('.get_content', content_path=cp)
-
-    return render_template('content/item.html.jinja2', item=item)
+from .content import Item
 
 
 def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
+    """Generates the Flask app instance
+
+    Args:
+        secret_key (str): a string used for Cookies and stuff
+        data_path (str): the directory where the media data is to be stored
+        tmp_path (str): the directory where cache (e.g., for thumbnails) is to be stored
+
+    Returns:
+        Flask: Flask app instance
+    """
     app = Flask(__name__)
 
     app.secret_key = secret_key
+
+    Item.DATA_PATH = data_path
+    Item.THUMB_PATH = tmp_path
 
     @app.route("/", defaults={'content_path': ""})
     @app.route("/<path:content_path>")
@@ -146,36 +43,50 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
             str: Response page of a list of folders or the content of an item
         """
 
+        # Remove trailing path separators
         while len(content_path) > 0 and content_path[-1] == os.path.sep:
             content_path = content_path[:-1]
 
-        full_path = os.path.join(data_path, content_path)
-        thumb_path = os.path.join(tmp_path, content_path)
+        item = Item(content_path)
 
-        if not os.path.exists(full_path):
+        # If nothing exists for the item, abort
+        if not item.exists:
             return abort(404)
 
+        # Populate the breadcrumbs based on the content path for navigation
         g.breadcrumbs = content_path.split('/')
         if g.breadcrumbs[0] == '':
             del g.breadcrumbs
 
+        # Test what is requested based on arguments of GET request...
+
+        # ... list of dir content
+        if item.is_dir:
+            return render_template(
+                'content/item-list.html.jinja2',
+                item_list=item.content_list
+            )
+
+        # ... raw file
         if request.args.get('raw', default=None) is not None:
-            return send_raw(full_path)
+            return item.raw
 
+        # ... thumb file
         if request.args.get('thumb', default=None) is not None:
-            return send_thumb(full_path, thumb_path)
+            return item.thumb
 
-        if os.path.isdir(full_path):
-            return send_list(full_path, content_path, data_path)
-
-        return send_item(full_path, content_path)
+        # ... page of content
+        return render_template(
+            'content/item-single.html.jinja2',
+            item=item
+        )
 
     @app.route("/:/", defaults={'content_path': ""}, methods=['POST'])
     @app.route("/:/<path:content_path>", methods=['POST'])
     def manage(content_path: str) -> str:
         """A POST-only route to upload files, create folders and delete items at the content path.
 
-        When passing a GET argument of:
+        When passing a POST argument of:
 
         - `upload` one or more passed files can be uploaded to the content path.
         - `new_folder` a folder of `folder-name` (form value) is added.
