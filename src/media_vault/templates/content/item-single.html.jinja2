@@ -1,0 +1,23 @@
+{% extends 'content/base.html.jinja2' %}
+
+{% block main %}
+
+<div class="item-single">
+    {% if item.type == 'image' %}
+
+    <img src="{{ item.raw_url }}" id="item" alt="">
+
+    {% elif item.type == 'video' %}
+
+    <video id="item" controls autoplay>
+        <source src="{{ item.raw_url }}" type="video/{{ item.suffix }}">
+        Your browser does not support the video tag.
+    </video>
+
+    {% else %}
+
+    <p>Unknown item type of {{ item.type }}. Can only show images and videos.</p>
+
+    {% endif %}
+</div>
+{% endblock main %}

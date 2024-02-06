@@ -1,0 +1,16 @@
+{% extends 'content/base.html.jinja2' %}
+
+{% block main %}
+
+<ul class="item-list">
+    {% for item in item_list %}
+    <li class="item">
+        <a href="{{ url_for('get_content', content_path=item.content_path) }}">
+            <img class="thumb" src="{{ item.thumb_url }}" alt="{{ item.file_name }}">
+            <span class="thumb-name">{{item.name}}</span>
+        </a>
+    </li>
+    {% endfor %}
+</ul>
+
+{% endblock main %}
