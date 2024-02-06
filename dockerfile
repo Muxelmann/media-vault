@@ -1,5 +1,5 @@
 # For more information, please refer to https://aka.ms/vscode-docker-python
-FROM python:3.10-slim
+FROM python:3.12.1-slim
 
 EXPOSE 80
 
@@ -12,9 +12,9 @@ ENV PYTHONUNBUFFERED=1
 RUN \
     apt-get -y update && \
     apt-get install -y --no-install-recommends \
-    build-essential \
-    libjpeg-dev \
-    zlib1g-dev \
+    # build-essential \
+    # libjpeg-dev \
+    # zlib1g-dev \
     ffmpeg && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
