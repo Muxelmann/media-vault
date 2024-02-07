@@ -65,7 +65,7 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
         if request.args.get('favorites', default=None) is not None:
             return render_template(
                 'content/item-list.html.jinja2',
-                content_path=content_path,
+                item=item,
                 item_list=Item.get_favorites_list()
             )
 
@@ -73,7 +73,7 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
         if item.is_dir:
             return render_template(
                 'content/item-list.html.jinja2',
-                content_path=content_path,
+                item=item,
                 item_list=item.content_list
             )
 
