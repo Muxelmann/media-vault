@@ -2,21 +2,41 @@
 
 {% block main %}
 
+<script>
+    function toggleFavorite(element) {
+        // Post data using the Fetch API
+        fetch(element.form.action, {
+            method: element.form.method,
+            body: new FormData(element.form),
+        });
+    }
+</script>
+
 <ul class="item-list">
     {% for item in item_list %}
     <li class="item">
         <a href="{{ url_for('get_content', content_path=item.content_path) }}">
+
             {% if item.type == 'image' %}
-            <img class="thumb" src="{{ item.thumb_url }}" alt="{{ item.file_name }}">
+
+            <img class="thumb" src="{{ item.thumb_url }}" alt="{{ item.file_name }}" loading="lazy">
+
             {% elif item.type == 'video'%}
-            <video class="thumb" onloadeddata="this.currentTime=this.duration/2;"
-                onmouseover="this.currentTime=0;this.play()"
-                onmouseout="this.pause();this.currentTime=this.duration/2;">
+
+            <video class="thumb" preload="none" onmouseover="this.currentTime=0;this.play();" onmouseout="this.load();"
+                poster="{{ item.poster_url }}">
                 <source src="{{ item.thumb_url }}" type="video/{{ item.suffix }}">
                 Your browser does not support the video tag.
             </video>
+
             {% endif %}
             <span class="thumb-name">{{item.name}}</span>
+            <form action="{{ url_for('.manage', content_path=content_path, toggle_favorite=item.content_path) }}"
+                method="post">
+                <input type="checkbox" class="toggle-favorite" name="toggle-favorite" onchange="toggleFavorite(this);"
+                    {% if item.is_favorite %} checked{% endif %}>
+            </form>
+            <a href="#top">⬆️</a>
         </a>
     </li>
     {% endfor %}

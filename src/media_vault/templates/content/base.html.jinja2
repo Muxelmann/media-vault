@@ -1,7 +1,7 @@
 {% extends 'base.html.jinja2' %}
 
 {% block html_body %}
-
+<a id="top"></a>
 <div id="main-wrapper">
     <ul class="breadcrumbs">
         <li><a href="{{ url_for('.get_content') }}">Home</a></li>
@@ -9,6 +9,7 @@
         {% set content_path = g.breadcrumbs[:loop.index] | join('/') %}
         <li><a href="{{ url_for('.get_content', content_path=content_path) }}">{{ breadcrumb }}</a></li>
         {% endfor %}
+        <li><a href="{{ url_for('.get_content', content_path=content_path, favorites=True) }}">Favorites</a></li>
     </ul>
     {% block main %}{% endblock main %}
 </div>

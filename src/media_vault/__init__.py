@@ -22,7 +22,8 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
     app.secret_key = secret_key
 
     Item.DATA_PATH = data_path
-    Item.THUMB_PATH = tmp_path
+    Item.THUMB_PATH = os.path.join(tmp_path, 'thumb')
+    Item.FAV_LIST_PATH = os.path.join(tmp_path, 'favorites.json')
 
     @app.route("/", defaults={'content_path': ""})
     @app.route("/<path:content_path>")
@@ -60,10 +61,19 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
 
         # Test what is requested based on arguments of GET request...
 
+        # ... list favorites
+        if request.args.get('favorites', default=None) is not None:
+            return render_template(
+                'content/item-list.html.jinja2',
+                content_path=content_path,
+                item_list=Item.get_favorites_list()
+            )
+
         # ... list of dir content
         if item.is_dir:
             return render_template(
                 'content/item-list.html.jinja2',
+                content_path=content_path,
                 item_list=item.content_list
             )
 
@@ -74,6 +84,10 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
         # ... thumb file
         if request.args.get('thumb', default=None) is not None:
             return item.thumb
+
+        # ... poster file
+        if request.args.get('poster', default=None) is not None:
+            return item.poster
 
         # ... page of content
         return render_template(
@@ -101,52 +115,10 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
         default_redirect = redirect(
             url_for('.get_content', content_path=content_path))
 
-        if request.args.get('upload', None) is not None:
-            if 'file' not in request.files:
-                return default_redirect
-
-            file = request.files['file']
-            full_path = os.path.join(
-                data_path, content_path, secure_filename(file.filename))
-            file.save(full_path)
-
-        elif request.args.get('new_folder', None) is not None:
-            folder_name = request.form.get('folder-name')
-            if folder_name is None:
-                return default_redirect
-
-            folder_name = secure_filename(folder_name)
-
-            full_path = os.path.join(data_path, content_path, folder_name)
-
-            if os.path.exists(full_path):
-                return default_redirect
-
-            os.makedirs(full_path)
-            return redirect(url_for('.get_content', content_path=os.path.join(content_path, folder_name)))
-
-        elif request.args.get('delete') is not None:
-            item_name = request.form.get('item-name')
-
-            full_path = os.path.join(data_path, content_path)
-
-            if item_name is None:
-                return default_redirect
-
-            if item_name == '':  # delete this file (not folder)
-                if os.path.isdir(full_path):
-                    return default_redirect
-                if os.path.exists(full_path):
-                    os.remove(full_path)
-
-                return redirect(url_for('.get_content', content_path=os.path.split(content_path)[0]))
-
-            # delete file or folder
-            full_path = os.path.join(full_path, item_name)
-            if os.path.isdir(full_path):
-                shutil.rmtree(full_path)
-            else:
-                os.remove(full_path)
+        if request.args.get('toggle_favorite') is not None:
+            item = Item(request.args.get('toggle_favorite'))
+            is_favorite = request.form.get('toggle-favorite') == 'on'
+            item.set_favorite(is_favorite)
 
         return default_redirect
     return app

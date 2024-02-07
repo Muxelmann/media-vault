@@ -9,7 +9,7 @@
 
     {% elif item.type == 'video' %}
 
-    <video id="item" controls autoplay>
+    <video id="item" autoplay loop playsinline controls>
         <source src="{{ item.raw_url }}" type="video/{{ item.suffix }}">
         Your browser does not support the video tag.
     </video>
