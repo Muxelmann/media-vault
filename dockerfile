@@ -12,6 +12,17 @@ ENV PYTHONUNBUFFERED=1
 RUN \
     apt-get -y update && \
     apt-get install -y --no-install-recommends \
+    pkg-config \
+    libavformat-dev \
+    libavcodec-dev \
+    libavdevice-dev \
+    libavutil-dev \
+    libswscale-dev \
+    libswresample-dev \
+    libavfilter-dev \
+    build-essential \
+    libjpeg-dev \
+    zlib1g-dev \
     ffmpeg && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
