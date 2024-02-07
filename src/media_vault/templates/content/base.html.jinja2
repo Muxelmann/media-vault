@@ -2,18 +2,22 @@
 
 {% block html_body %}
 <a id="top"></a>
-<div id="main-wrapper">
+<div class="nav">
     <ul class="breadcrumbs">
         <li><a href="{{ url_for('.get_content') }}">Home</a></li>
         {% for breadcrumb in g.breadcrumbs %}
         {% set content_path = g.breadcrumbs[:loop.index] | join('/') %}
         <li><a href="{{ url_for('.get_content', content_path=content_path) }}">{{ breadcrumb }}</a></li>
         {% endfor %}
-        <li><a href="{{ url_for('.get_content', content_path=content_path, favorites=True) }}">Favorites</a></li>
     </ul>
-    {% block main %}{% endblock main %}
+    <a onclick="toggleView();">📋</a>
+    <a href="{{ url_for('.get_content', content_path=item.content_path, favorites=True) }}">⭐️</a>
+    <form action="{{ url_for('.manage', content_path=item.content_path, toggle_favorite=item.content_path) }}"
+        method="post">
+        <input type="checkbox" class="toggle-favorite" name="toggle-favorite" onchange="toggleFavorite(this);" {% if
+            item.is_favorite %} checked{% endif %}>
+    </form>
 </div>
-
-{#
-<script src="{{ url_for('static', filename='script.js') }}"></script> #}
+{% block main %}{% endblock main %}
+<script src="{{ url_for('static', filename='script.js') }}"></script>
 {% endblock html_body %}
