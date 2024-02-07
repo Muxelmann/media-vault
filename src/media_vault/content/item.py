@@ -56,7 +56,9 @@ class Item:
         self.file_name = os.path.basename(self.full_path)
         self.name, self.suffix = os.path.splitext(self.file_name)
         self.suffix = self.suffix[1:].lower()
-        if self.suffix in IMAGE_SUFFIX:
+        if self.suffix == '':
+            self.type = 'folder'
+        elif self.suffix in IMAGE_SUFFIX:
             self.type = 'image'
         elif self.suffix in VIDEO_SUFFIX:
             self.type = 'video'
@@ -155,7 +157,10 @@ class Item:
         # Make folder structure to save thumb
         base_path = os.path.split(self.thumb_path)[0]
         if not os.path.exists(base_path):
-            os.makedirs(base_path)
+            try:
+                os.makedirs(base_path)
+            except FileExistsError:
+                pass
 
         # If thumb already exists, send it
         if os.path.exists(self.thumb_path):
