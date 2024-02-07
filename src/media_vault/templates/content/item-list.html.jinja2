@@ -9,9 +9,6 @@
             {% if item.type == 'image' %}
 
             <img class="thumb" src="{{ item.thumb_url }}" alt="{{ item.file_name }}" loading="lazy">
-            <div class="info">
-                <div class="name">{{item.name}}</div>
-            </div>
 
             {% elif item.type == 'video'%}
 
@@ -20,9 +17,6 @@
                 <source src="{{ item.thumb_url }}" type="video/{{ item.suffix }}">
                 Your browser does not support the video tag.
             </video>
-            <div class="info">
-                <div class="name">{{item.name}}</div>
-            </div>
 
             {% elif item.type == 'folder'%}
 
@@ -32,6 +26,11 @@
             </div>
 
             {% endif %}
+
+            <div class="info">
+                <div class="name">{{item.name}}</div>
+            </div>
+
             <form action="{{ url_for('.manage', content_path=content_path, toggle_favorite=item.content_path) }}"
                 method="post">
                 <input type="checkbox" class="toggle-favorite" name="toggle-favorite" onchange="toggleFavorite(this);"
