@@ -47,7 +47,7 @@ a {
 }
 
 .breadcrumbs>*::after {
-    content: ">";
+    content: "→";
     position: relative;
     left: 0.25rem;
 }

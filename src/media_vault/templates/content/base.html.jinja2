@@ -4,19 +4,28 @@
 <a id="top"></a>
 <div class="nav">
     <ul class="breadcrumbs">
-        <li><a href="{{ url_for('.get_content') }}">Home</a></li>
+        <li><a href="{{ url_for('.get_content') }}">🏠</a></li>
         {% for breadcrumb in g.breadcrumbs %}
         {% set content_path = g.breadcrumbs[:loop.index] | join('/') %}
-        <li><a href="{{ url_for('.get_content', content_path=content_path) }}">{{ breadcrumb }}</a></li>
+        <li><a href="{{ url_for('.get_content', content_path=content_path) }}">
+                {% if '.' in breadcrumb %}
+                🍿
+                {% else %}
+                🗂️
+                {% endif %}
+            </a></li>
         {% endfor %}
     </ul>
     <a onclick="toggleView();">📋</a>
     <a href="{{ url_for('.get_content', content_path=item.content_path, favorites=True) }}">⭐️</a>
+
+    {% if g.breadcrumbs|length > 0 %}
     <form action="{{ url_for('.manage', content_path=item.content_path, toggle_favorite=item.content_path) }}"
         method="post">
         <input type="checkbox" class="toggle-favorite" name="toggle-favorite" onchange="toggleFavorite(this);" {% if
             item.is_favorite %} checked{% endif %}>
     </form>
+    {% endif %}
 </div>
 {% block main %}{% endblock main %}
 <script src="{{ url_for('static', filename='script.js') }}"></script>
