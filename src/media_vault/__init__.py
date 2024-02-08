@@ -143,5 +143,9 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
                 url_for('.get_content', content_path=content_path, search=True)
             )
 
+        elif request.args.get('generate_all_thumbs') is not None:
+            Item.generate_all_thumbs()
+            return "OK"
+
         return default_redirect
     return app

@@ -3,7 +3,7 @@ import av
 import json
 import time
 from PIL import Image, ImageSequence, ImageFile
-from flask import abort, send_file, url_for
+from flask import abort, send_file, url_for, current_app
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
@@ -30,10 +30,19 @@ class Item:
 
         Saving is not performed if either of these values is `None`.
         """
-        if cls.FAV_LIST is None or cls.FAV_LIST_PATH is None:
+        # Make folder structure to save thumb
+        base_path = os.path.split(Item.FAV_LIST_PATH)[0]
+        if not os.path.exists(base_path):
+            try:
+                os.makedirs(base_path)
+            except FileExistsError:
+                pass
+
+        # Save list of favorites
+        if Item.FAV_LIST is None or Item.FAV_LIST_PATH is None:
             return
-        with open(cls.FAV_LIST_PATH, 'w') as f:
-            json.dump(cls.FAV_LIST, f)
+        with open(Item.FAV_LIST_PATH, 'w') as f:
+            json.dump(Item.FAV_LIST, f)
 
     @classmethod
     def get_favorites_list(cls) -> list['Item']:
@@ -87,6 +96,16 @@ class Item:
     @classmethod
     def get_search_duration(cls) -> str:
         return Item.SEARCH['duration']
+
+    @classmethod
+    def generate_all_thumbs(cls) -> bool:
+        for root, _, files in os.walk(Item.DATA_PATH):
+            for file in [f for f in files if f[0] != '.' and f[0] != '@']:
+                full_path = os.path.join(root, file)
+                content_path = full_path.replace(Item.DATA_PATH, '')[1:]
+                item = Item(content_path)
+                item.make_thumb()
+                item.make_poster()
 
     def __init__(self, content_path: str, find_neighbors: bool = False) -> None:
         self.content_path = content_path
@@ -236,9 +255,11 @@ class Item:
             except FileExistsError:
                 pass
 
-        # If thumb already exists, send it
+        # If thumb already exists, do nothing
         if os.path.exists(self.thumb_path):
             return True
+
+        current_app.logger.info(f'Generating thumbnail for: {self.file_name}')
 
         # Generate thumb
         if self.type == 'video':
@@ -368,6 +389,11 @@ class Item:
 
         if not os.path.exists(self.thumb_path) and not self.make_thumb():
             return False
+
+        if os.path.exists(self.poster_path):
+            return True
+
+        current_app.logger.info(f'Generating poster for: {self.file_name}')
 
         with av.open(self.thumb_path) as container:
 
