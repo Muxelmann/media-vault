@@ -12,6 +12,7 @@
     --item-height: 100px;
     --item-gap: 1rem;
     --thumb-size: 100px;
+    --col-grey: #d4d4d4;
 }
 
 body {
@@ -39,7 +40,7 @@ a {
     align-items: center;
     justify-content: space-between;
     gap: 0.5rem;
-    border: 1px solid red;
+    border-bottom: 1px solid var(--col-grey);
 }
 
 .breadcrumbs,
@@ -81,7 +82,7 @@ a {
 }
 
 .folder {
-    background-color: #d4d4d4;
+    background-color: var(--col-grey);
     display: flex;
     flex-direction: column;
     justify-content: center;
