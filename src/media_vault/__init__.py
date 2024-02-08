@@ -1,6 +1,7 @@
 from flask import Flask, render_template, url_for, abort, request, g, redirect
 import os
 import time
+import json
 
 from .content import Item
 
@@ -70,8 +71,18 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
 
         # ... if searching
         if request.args.get('search') is not None:
+
+            search_result_list = request.cookies.get('search_result_list')
+            if search_result_list is not None:
+                item_list = [Item(s) for s in json.loads(search_result_list)]
+            else:
+                item_list = None
+            search_keyword = request.cookies.get('search_keyword')
             return render_template(
                 'content/item-search.html.jinja2',
+                item_list=item_list,
+                search_keyword=search_keyword,
+                search_duration=request.cookies.get('search_duration'),
                 item=item
             )
 
@@ -122,7 +133,8 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
             str: Redirection to new folder, `OK` acknowledgemet or default redirection
         """
         default_redirect = redirect(
-            url_for('.get_content', content_path=content_path))
+            url_for('.get_content', content_path=content_path)
+        )
 
         if request.args.get('toggle_favorite') is not None:
             item = Item(request.args.get('toggle_favorite'))
@@ -134,7 +146,7 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
             if search_keyword == '':
                 return default_redirect
 
-            def find_files(search_keyword):
+            def find_files(search_keyword) -> list[str]:
                 results = []
 
                 for root, dirs, files in os.walk(Item.DATA_PATH):
@@ -143,7 +155,7 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
                         if search_keyword in dirname:
                             result = os.path.join(root, dir)
                             results.append(
-                                Item(result.replace(Item.DATA_PATH, '')[1:])
+                                result.replace(Item.DATA_PATH, '')[1:]
                             )
 
                     for file in [f for f in files if f[0] != '.' and f[0] != '@']:
@@ -151,21 +163,35 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
                         if search_keyword in filename:
                             result = os.path.join(root, file)
                             results.append(
-                                Item(result.replace(Item.DATA_PATH, '')[1:])
+                                result.replace(Item.DATA_PATH, '')[1:]
                             )
 
                 return results
 
-            start_search = time.time()
-            item_list = find_files(search_keyword.lower())
-            end_search = time.time()
+            search_start_time = time.time()
+            search_result_list = find_files(search_keyword.lower())
+            search_end_time = time.time()
 
-            return render_template(
-                'content/item-search.html.jinja2',
-                item=Item(''),
-                item_list=item_list,
-                search_duration=end_search-start_search
+            response = redirect(
+                url_for('.get_content', content_path=content_path, search=True)
             )
+            response.set_cookie(
+                'search_keyword',
+                search_keyword,
+                max_age=10
+            )
+            response.set_cookie(
+                'search_result_list',
+                json.dumps(search_result_list),
+                max_age=10
+            )
+            response.set_cookie(
+                'search_duration',
+                '{:.3f}'.format(search_end_time - search_start_time),
+                max_age=10
+            )
+
+            return response
 
         return default_redirect
     return app

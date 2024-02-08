@@ -9,9 +9,11 @@
         <input type="submit" value="search">
     </form>
     {% if item_list %}
-    <h1>Results</h1>
+    <h1>Results for
+        <em>{{ search_keyword }}</em>
+    </h1>
     {% include 'content/include/item-list.html.jinja2' %}
-    <p>Search took {{search_duration | round(4) }} seconds.</p>
+    <p>Search took {{ search_duration }} seconds.</p>
     {% endif %}
 </div>
 {% endblock main %}
