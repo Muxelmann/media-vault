@@ -2,6 +2,7 @@
 
 {% block html_body %}
 <a id="top"></a>
+
 <div class="nav">
     <ul class="breadcrumbs">
         <li><a href="{{ url_for('.get_content') }}">🏠</a></li>
@@ -32,6 +33,17 @@
         {% endif %}
     </ul>
 </div>
+
 {% block main %}{% endblock main %}
+
+<div class="neighbors">
+    {% if item.previous_neighbor %}
+    <a class="previous" href="{{ url_for('.get_content', content_path=item.previous_neighbor.content_path) }}">←</a>
+    {% endif %}
+    {% if item.next_neighbor %}
+    <a class="next" href="{{ url_for('.get_content', content_path=item.next_neighbor.content_path) }}">→</a>
+    {% endif %}
+</div>
+
 <script src="{{ url_for('static', filename='script.js') }}"></script>
 {% endblock html_body %}

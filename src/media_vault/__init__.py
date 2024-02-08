@@ -69,14 +69,6 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
                 item_list=Item.get_favorites_list()
             )
 
-        # ... list of dir content
-        if item.is_dir:
-            return render_template(
-                'content/item-list.html.jinja2',
-                item=item,
-                item_list=item.content_list
-            )
-
         # ... raw file
         if request.args.get('raw', default=None) is not None:
             return item.raw
@@ -89,8 +81,18 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
         if request.args.get('poster', default=None) is not None:
             return item.poster
 
+        if content_path != '':
+            item = Item(content_path, find_neighbors=True)
+
+        # ... list of dir content
+        if item.is_dir:
+            return render_template(
+                'content/item-list.html.jinja2',
+                item=item,
+                item_list=item.content_list
+            )
+
         # ... page of content
-        item = Item(content_path, find_neighbors=True)
         return render_template(
             'content/item-single.html.jinja2',
             item=item
