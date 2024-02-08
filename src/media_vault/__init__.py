@@ -135,7 +135,15 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
             def find_files(search_keyword):
                 results = []
 
-                for root, _, files in os.walk(Item.DATA_PATH):
+                for root, dirs, files in os.walk(Item.DATA_PATH):
+                    for dir in [d for d in dirs if d[0] != '.' and d[0] != '@']:
+                        dirname = dir.lower()
+                        if search_keyword in dirname:
+                            result = os.path.join(root, dir)
+                            results.append(
+                                Item(result.replace(Item.DATA_PATH, '')[1:])
+                            )
+
                     for file in [f for f in files if f[0] != '.' and f[0] != '@']:
                         filename = os.path.splitext(file)[0].lower()
                         if search_keyword in filename:

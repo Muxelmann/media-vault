@@ -232,3 +232,14 @@ a {
 .item-search-form input[type=submit]:hover {
     background-color: white;
 }
+
+.to-top {
+    position: fixed;
+    bottom: var(--item-gap);
+    right: var(--item-gap);
+    width: calc(2*var(--item-gap));
+    height: calc(2*var(--item-gap));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
