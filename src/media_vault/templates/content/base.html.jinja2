@@ -16,16 +16,20 @@
             </a></li>
         {% endfor %}
     </ul>
-    <a onclick="toggleView();">📋</a>
-    <a href="{{ url_for('.get_content', content_path=item.content_path, favorites=True) }}">⭐️</a>
+    <ul class="manage">
+        <li><a onclick="toggleView();">📋</a></li>
+        <li><a href="{{ url_for('.get_content', content_path=item.content_path, favorites=True) }}">⭐️</a></li>
 
-    {% if g.breadcrumbs|length > 0 %}
-    <form action="{{ url_for('.manage', content_path=item.content_path, toggle_favorite=item.content_path) }}"
-        method="post">
-        <input type="checkbox" class="toggle-favorite" name="toggle-favorite" onchange="toggleFavorite(this);" {% if
-            item.is_favorite %} checked{% endif %}>
-    </form>
-    {% endif %}
+        {% if g.breadcrumbs|length > 0 %}
+        <li>
+            <form action="{{ url_for('.manage', content_path=item.content_path, toggle_favorite=item.content_path) }}"
+                method="post">
+                <input type="checkbox" class="toggle-favorite" name="toggle-favorite" onchange="toggleFavorite(this);"
+                    {% if item.is_favorite %} checked{% endif %}>
+            </form>
+        </li>
+        {% endif %}
+    </ul>
 </div>
 {% block main %}{% endblock main %}
 <script src="{{ url_for('static', filename='script.js') }}"></script>

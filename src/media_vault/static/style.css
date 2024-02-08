@@ -34,15 +34,19 @@ a {
     color: black;
 }
 
-.nav,
-.nav>* {
+.nav {
     display: flex;
+    align-items: center;
+    justify-content: space-between;
     gap: 0.5rem;
-    align-items: baseline;
-    justify-content: start;
+    border: 1px solid red;
 }
 
-.breadcrumbs {
+.breadcrumbs,
+.manage {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
     padding: 0 var(--item-gap);
 }
 
@@ -127,34 +131,41 @@ a {
 .toggle-favorite {
     appearance: none;
     position: relative;
+    width: var(--item-gap);
+}
+
+.toggle-favorite::before {
+    content: "";
+    position: absolute;
     height: var(--item-gap);
     width: var(--item-gap);
     border: 1px solid grey;
-}
-
-.nav .toggle-favorite {
-    top: 2px;
-}
-
-.item .toggle-favorite {
-    position: absolute;
-    left: calc(0.5 * var(--item-gap));
-    top: calc(0.5 * var(--item-gap));
-}
-
-.column .item .toggle-favorite {
-    left: calc(var(--thumb-size) + 2 * var(--item-gap));
-    top: var(--item-gap);
+    border-radius: 2px;
+    top: calc(-0.66 * var(--item-gap));
+    left: calc(50% - 0.5 * var(--item-gap));
 }
 
 .toggle-favorite::after {
     content: "";
     position: absolute;
-    left: 2px;
-    top: 2px;
-    height: calc(var(--item-gap) - 6px);
-    width: calc(var(--item-gap) - 6px);
+    top: calc(-0.66 * var(--item-gap) + 2px);
+    left: calc(50% - 0.5 * var(--item-gap) + 2px);
+    height: calc(var(--item-gap) - 4px);
+    width: calc(var(--item-gap) - 4px);
+    border-radius: 3px;
 }
+
+.item .toggle-favorite {
+    position: absolute;
+    left: calc(0.5 * var(--item-gap));
+    top: var(--item-gap);
+}
+
+.column .item .toggle-favorite {
+    left: calc(var(--thumb-size) + 2 * var(--item-gap));
+    top: calc(1.5 * var(--item-gap));
+}
+
 
 .toggle-favorite:checked {
     background-color: rgba(255, 255, 255, 0.7);
