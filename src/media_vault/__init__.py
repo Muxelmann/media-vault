@@ -19,6 +19,8 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
     """
     app = Flask(__name__)
 
+    COOKIE_EXPIRY = 60 * 60 * 24
+
     app.secret_key = secret_key
 
     Item.DATA_PATH = data_path
@@ -183,7 +185,7 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
             response.set_cookie(
                 'search_keyword',
                 search_keyword,
-                max_age=1800
+                max_age=COOKIE_EXPIRY
             )
 
             # Break up search results if too large for one cookie
@@ -194,20 +196,20 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
                     f'search_result_{search_result_splits}',
                     search_result[(search_result_splits) * max_cookie_size:
                                   (search_result_splits+1) * max_cookie_size],
-                    max_age=1800
+                    max_age=COOKIE_EXPIRY
                 )
                 search_result_splits += 1
 
             response.set_cookie(
                 'search_result_splits',
                 str(search_result_splits),
-                max_age=1800
+                max_age=COOKIE_EXPIRY
             )
 
             response.set_cookie(
                 'search_duration',
                 '{:.3f}'.format(search_end_time - search_start_time),
-                max_age=1800
+                max_age=COOKIE_EXPIRY
             )
 
             return response
