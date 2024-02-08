@@ -1,7 +1,6 @@
-from flask import Flask, render_template, url_for, abort, send_file, request, g, redirect
-from werkzeug.utils import secure_filename
+from flask import Flask, render_template, url_for, abort, request, g, redirect
 import os
-import shutil
+import time
 
 from .content import Item
 
@@ -133,8 +132,6 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
         elif request.args.get('search') is not None:
             search_keyword = request.form.get('keyword').lower()
 
-            print(f'searching: {search_keyword}')
-
             def find_files(search_keyword):
                 results = []
 
@@ -149,9 +146,16 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
 
                 return results
 
+            start_search = time.time()
             item_list = find_files(search_keyword)
-            print(f'Result: {item_list}')
-            return render_template('content/item-search.html.jinja2', item=Item(''), item_list=item_list)
+            end_search = time.time()
+
+            return render_template(
+                'content/item-search.html.jinja2',
+                item=Item(''),
+                item_list=item_list,
+                search_duration=end_search-start_search
+            )
 
         return default_redirect
     return app
