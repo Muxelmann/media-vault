@@ -112,7 +112,7 @@ class Item:
         """
         item_list = [
             Item(os.path.join(self.content_path, f))
-            for f in os.listdir(self.full_path) if f[0] != '.'
+            for f in os.listdir(self.full_path) if f[0] != '.' and f[0] != '@'
         ]
         return item_list
 
