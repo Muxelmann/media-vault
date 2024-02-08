@@ -178,17 +178,17 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
             response.set_cookie(
                 'search_keyword',
                 search_keyword,
-                max_age=10
+                max_age=1800
             )
             response.set_cookie(
                 'search_result_list',
                 json.dumps(search_result_list),
-                max_age=10
+                max_age=1800
             )
             response.set_cookie(
                 'search_duration',
                 '{:.3f}'.format(search_end_time - search_start_time),
-                max_age=10
+                max_age=1800
             )
 
             return response
