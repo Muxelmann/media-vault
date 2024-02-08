@@ -72,16 +72,21 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
         # ... if searching
         if request.args.get('search') is not None:
 
-            search_result_list = request.cookies.get('search_result_list')
-            if search_result_list is not None:
-                item_list = [Item(s) for s in json.loads(search_result_list)]
+            # Combine search results if too large for one cookie
+            search_result_splits = request.cookies.get('search_result_splits')
+            if search_result_splits is not None:
+                search_result_str = ''
+                for idx in range(int(search_result_splits)):
+                    search_result_str += request.cookies.get(
+                        f'search_result_{idx}')
+                item_list = [Item(s) for s in json.loads(search_result_str)]
             else:
                 item_list = None
-            search_keyword = request.cookies.get('search_keyword')
+
             return render_template(
                 'content/item-search.html.jinja2',
                 item_list=item_list,
-                search_keyword=search_keyword,
+                search_keyword=request.cookies.get('search_keyword'),
                 search_duration=request.cookies.get('search_duration'),
                 item=item
             )
@@ -169,7 +174,7 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
                 return results
 
             search_start_time = time.time()
-            search_result_list = find_files(search_keyword.lower())
+            search_result = json.dumps(find_files(search_keyword.lower()))
             search_end_time = time.time()
 
             response = redirect(
@@ -180,11 +185,25 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
                 search_keyword,
                 max_age=1800
             )
+
+            # Break up search results if too large for one cookie
+            search_result_splits = 0
+            max_cookie_size = 2048
+            while len(search_result) > search_result_splits * max_cookie_size:
+                response.set_cookie(
+                    f'search_result_{search_result_splits}',
+                    search_result[(search_result_splits) * max_cookie_size:
+                                  (search_result_splits+1) * max_cookie_size],
+                    max_age=1800
+                )
+                search_result_splits += 1
+
             response.set_cookie(
-                'search_result_list',
-                json.dumps(search_result_list),
+                'search_result_splits',
+                str(search_result_splits),
                 max_age=1800
             )
+
             response.set_cookie(
                 'search_duration',
                 '{:.3f}'.format(search_end_time - search_start_time),
