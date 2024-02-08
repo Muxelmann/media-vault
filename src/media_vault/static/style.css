@@ -41,6 +41,7 @@ a {
     justify-content: space-between;
     gap: 0.5rem;
     border-bottom: 1px solid var(--col-grey);
+    margin-bottom: 1rem;
 }
 
 .breadcrumbs,
@@ -62,6 +63,7 @@ a {
 }
 
 .item-list {
+    margin: 0;
     padding-inline: 0;
     display: flex;
     flex-wrap: wrap;
@@ -154,6 +156,7 @@ a {
     height: calc(var(--item-gap) - 4px);
     width: calc(var(--item-gap) - 4px);
     border-radius: 3px;
+    clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
 }
 
 .item .toggle-favorite {
@@ -167,15 +170,21 @@ a {
     top: calc(1.5 * var(--item-gap));
 }
 
+.toggle-favorite:hover::before {
+    background-color: rgba(255, 255, 255, 0.7);
+}
 
-.toggle-favorite:checked {
+.toggle-favorite:hover::after {
+    background-color: var(--col-grey);
+}
+
+.toggle-favorite:checked::before {
     background-color: rgba(255, 255, 255, 0.7);
 }
 
 .toggle-favorite:checked::after {
     background-color: #077195;
     transform-origin: bottom left;
-    clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
 }
 
 .neighbors>* {
@@ -193,4 +202,33 @@ a {
 
 .neighbors .next {
     right: 0;
+}
+
+.item-search,
+.item-search-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--item-gap);
+}
+
+.item-search-form input {
+    padding: 1px 0.5rem;
+    height: 2rem;
+    width: min(500px, 80vw);
+}
+
+.item-search-form input[type=text] {
+    border: 1px solid var(--col-grey);
+}
+
+.item-search-form input[type=submit] {
+    text-transform: uppercase;
+    border: 1px solid var(--col-grey);
+    background-color: var(--col-grey);
+}
+
+.item-search-form input[type=submit]:hover {
+    background-color: white;
 }

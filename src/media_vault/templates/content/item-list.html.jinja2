@@ -1,51 +1,6 @@
 {% extends 'content/base.html.jinja2' %}
 
 {% block main %}
-<ul id="item-list" class="item-list">
-    {% for item in item_list %}
-    <li class="item">
-        <a href="{{ url_for('get_content', content_path=item.content_path) }}">
-
-            {% if item.type == 'image' %}
-
-            <img class="thumb" src="{{ item.thumb_url }}" alt="{{ item.file_name }}" loading="lazy">
-            <div class="info">
-                <div class="name">{{item.name}}</div>
-                <div class="size">{{item.size}} {{item.size_unit}}</div>
-            </div>
-
-            {% elif item.type == 'video'%}
-
-            <video class="thumb" preload="none" onmouseover="this.currentTime=0;this.play();" onmouseout="this.load();"
-                poster="{{ item.poster_url }}">
-                <source src="{{ item.thumb_url }}" type="video/{{ item.suffix }}">
-                Your browser does not support the video tag.
-            </video>
-            <div class="info">
-                <div class="name">{{item.name}}</div>
-                <div class="size">{{item.size}} {{item.size_unit}}</div>
-            </div>
-
-            {% elif item.type == 'folder'%}
-
-            <div class="thumb folder">
-                <div class="icon">🗂️</div>
-                <div class="name">{{item.name}}</div>
-            </div>
-            <div class="info">
-                <div class="name">{{item.name}}</div>
-            </div>
-
-            {% endif %}
-
-            <form action="{{ url_for('.manage', content_path=content_path, toggle_favorite=item.content_path) }}"
-                method="post">
-                <input type="checkbox" class="toggle-favorite" name="toggle-favorite" onchange="toggleFavorite(this);"
-                    {% if item.is_favorite %} checked{% endif %}>
-            </form>
-        </a>
-    </li>
-    {% endfor %}
-</ul>
+{% include 'content/include/item-list.html.jinja2' %}
 
 {% endblock main %}

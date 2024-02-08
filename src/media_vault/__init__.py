@@ -69,6 +69,13 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
                 item_list=Item.get_favorites_list()
             )
 
+        # ... if searching
+        if request.args.get('search') is not None:
+            return render_template(
+                'content/item-search.html.jinja2',
+                item=item
+            )
+
         # ... raw file
         if request.args.get('raw', default=None) is not None:
             return item.raw
@@ -122,6 +129,29 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
             item = Item(request.args.get('toggle_favorite'))
             is_favorite = request.form.get('toggle-favorite') == 'on'
             item.set_favorite(is_favorite)
+
+        elif request.args.get('search') is not None:
+            search_keyword = request.form.get('keyword').lower()
+
+            print(f'searching: {search_keyword}')
+
+            def find_files(search_keyword):
+                results = []
+
+                for root, _, files in os.walk(Item.DATA_PATH):
+                    for file in [f for f in files if f[0] != '.' and f[0] != '@']:
+                        filename = os.path.splitext(file)[0].lower()
+                        if search_keyword in filename:
+                            result = os.path.join(root, file)
+                            results.append(
+                                Item(result.replace(Item.DATA_PATH, '')[1:])
+                            )
+
+                return results
+
+            item_list = find_files(search_keyword)
+            print(f'Result: {item_list}')
+            return render_template('content/item-search.html.jinja2', item=Item(''), item_list=item_list)
 
         return default_redirect
     return app

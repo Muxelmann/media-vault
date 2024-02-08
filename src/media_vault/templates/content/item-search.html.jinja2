@@ -1,0 +1,15 @@
+{% extends 'content/base.html.jinja2' %}
+
+{% block main %}
+<div class="item-search">
+    <h1>Search</h1>
+    <form class="item-search-form" action="{{ url_for('.manage', search=True) }}" method="post">
+        <input type="text" name="keyword" id="">
+        <input type="submit" value="search">
+    </form>
+    {% if item_list %}
+    <h1>Results</h1>
+    {% include 'content/include/item-list.html.jinja2' %}
+    {% endif %}
+</div>
+{% endblock main %}

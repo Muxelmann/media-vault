@@ -29,8 +29,8 @@
                     {% if item.is_favorite %} checked{% endif %}>
             </form>
         </li>
-        <li><a href="">🔎</a></li>
         {% endif %}
+        <li><a href="{{ url_for('.get_content', content_path=item.content_path, search=True) }}">🔎</a></li>
     </ul>
 </div>
 
