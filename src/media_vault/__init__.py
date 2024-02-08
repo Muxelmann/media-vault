@@ -130,7 +130,9 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
             item.set_favorite(is_favorite)
 
         elif request.args.get('search') is not None:
-            search_keyword = request.form.get('keyword').lower()
+            search_keyword = request.form.get('keyword', default='')
+            if search_keyword == '':
+                return default_redirect
 
             def find_files(search_keyword):
                 results = []
@@ -155,7 +157,7 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
                 return results
 
             start_search = time.time()
-            item_list = find_files(search_keyword)
+            item_list = find_files(search_keyword.lower())
             end_search = time.time()
 
             return render_template(
