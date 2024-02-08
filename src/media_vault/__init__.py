@@ -90,6 +90,7 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
             return item.poster
 
         # ... page of content
+        item = Item(content_path, find_neighbors=True)
         return render_template(
             'content/item-single.html.jinja2',
             item=item

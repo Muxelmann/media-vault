@@ -44,7 +44,7 @@ class Item:
         ]
         return item_list
 
-    def __init__(self, content_path: str) -> None:
+    def __init__(self, content_path: str, find_neighbors: bool = False) -> None:
         self.content_path = content_path
 
         # Generate full path to content
@@ -53,20 +53,34 @@ class Item:
         self.poster_path = None  # only for video
 
         # Extract file information and set thumb and poster paths
-        self.file_name = os.path.basename(self.full_path)
+        self.folder, self.file_name = os.path.split(content_path)
         self.name, self.suffix = os.path.splitext(self.file_name)
         self.suffix = self.suffix[1:].lower()
+        self.type = 'unknown'
+        self.size = 0
         if self.suffix == '':
             self.type = 'folder'
         elif self.suffix in IMAGE_SUFFIX:
             self.type = 'image'
+            self.size = os.path.getsize(self.full_path)
         elif self.suffix in VIDEO_SUFFIX:
             self.type = 'video'
+            self.size = os.path.getsize(self.full_path)
             self.poster_path = os.path.join(os.path.split(
                 self.thumb_path)[0], f'{self.name}.png')
-        else:
-            self.type = 'unknown'
 
+        # For size information
+        if self.size > 2**30:
+            self.size //= 2**30
+            self.size_unit = 'GB'
+        elif self.size > 2**20:
+            self.size //= 2**20
+            self.size_unit = 'MB'
+        elif self.size > 2**10:
+            self.size //= 2**10
+            self.size_unit = 'kB'
+
+        # Get favorite status
         if Item.FAV_LIST is None:
             if not os.path.exists(self.FAV_LIST_PATH):
                 Item.FAV_LIST = []
@@ -77,6 +91,19 @@ class Item:
                     Item.FAV_LIST = new_fav_list
 
         self.is_favorite = self.content_path in Item.FAV_LIST
+
+        # Get neighboring information for going to next and previous
+        if find_neighbors:
+            self.previous_neighbor = None
+            self.next_neighbor = None
+
+            content_in_folder = Item(self.folder).content_list
+            idx = content_in_folder.index(self)
+
+            if idx > 0:
+                self.previous_neighbor = content_in_folder[idx - 1]
+            if idx < len(content_in_folder) - 1:
+                self.next_neighbor = content_in_folder[idx + 1]
 
     def set_favorite(self, is_favorite: bool) -> None:
         self.is_favorite = is_favorite
@@ -91,6 +118,9 @@ class Item:
 
     def __lt__(self, other: 'Item') -> bool:
         return self.name < other.name
+
+    def __eq__(self, other: 'Item') -> bool:
+        return self.content_path == other.content_path
 
     @property
     def is_dir(self) -> bool:
@@ -114,6 +144,7 @@ class Item:
             Item(os.path.join(self.content_path, f))
             for f in os.listdir(self.full_path) if f[0] != '.' and f[0] != '@'
         ]
+        item_list.sort()
         return item_list
 
     @property

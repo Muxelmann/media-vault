@@ -9,6 +9,10 @@
             {% if item.type == 'image' %}
 
             <img class="thumb" src="{{ item.thumb_url }}" alt="{{ item.file_name }}" loading="lazy">
+            <div class="info">
+                <div class="name">{{item.name}}</div>
+                <div class="size">{{item.size}} {{item.size_unit}}</div>
+            </div>
 
             {% elif item.type == 'video'%}
 
@@ -17,6 +21,10 @@
                 <source src="{{ item.thumb_url }}" type="video/{{ item.suffix }}">
                 Your browser does not support the video tag.
             </video>
+            <div class="info">
+                <div class="name">{{item.name}}</div>
+                <div class="size">{{item.size}} {{item.size_unit}}</div>
+            </div>
 
             {% elif item.type == 'folder'%}
 
@@ -24,12 +32,11 @@
                 <div class="icon">🗂️</div>
                 <div class="name">{{item.name}}</div>
             </div>
-
-            {% endif %}
-
             <div class="info">
                 <div class="name">{{item.name}}</div>
             </div>
+
+            {% endif %}
 
             <form action="{{ url_for('.manage', content_path=content_path, toggle_favorite=item.content_path) }}"
                 method="post">
