@@ -1,6 +1,7 @@
 import os
 import av
 import json
+import time
 from PIL import Image, ImageSequence, ImageFile
 from flask import abort, send_file, url_for
 
@@ -17,6 +18,11 @@ class Item:
     THUMB_FRAMES_COUNT = 30
     FAV_LIST_PATH = None
     FAV_LIST = None
+    SEARCH = {
+        'keyword': None,
+        'results': None,
+        'duration': 0.0
+    }
 
     @classmethod
     def update_fav_list(cls) -> None:
@@ -43,6 +49,44 @@ class Item:
             Item(content_path) for content_path in cls.FAV_LIST
         ]
         return item_list
+
+    @classmethod
+    def search(cls, keyword: str) -> None:
+        Item.SEARCH['keyword'] = keyword
+        search_start_time = time.time()
+        results = []
+
+        for root, dirs, files in os.walk(Item.DATA_PATH):
+            for dir in [d for d in dirs if d[0] != '.' and d[0] != '@']:
+                dirname = dir.lower()
+                if keyword in dirname:
+                    result = os.path.join(root, dir)
+                    results.append(
+                        Item(result.replace(Item.DATA_PATH, '')[1:])
+                    )
+
+            for file in [f for f in files if f[0] != '.' and f[0] != '@']:
+                filename = os.path.splitext(file)[0].lower()
+                if keyword in filename:
+                    result = os.path.join(root, file)
+                    results.append(
+                        Item(result.replace(Item.DATA_PATH, '')[1:])
+                    )
+        search_end_time = time.time()
+        Item.SEARCH['results'] = results
+        Item.SEARCH['duration'] = search_end_time - search_start_time
+
+    @classmethod
+    def get_search_results(cls) -> list['Item']:
+        return Item.SEARCH['results']
+
+    @classmethod
+    def get_searched_keyword(cls) -> str:
+        return Item.SEARCH['keyword']
+
+    @classmethod
+    def get_search_duration(cls) -> str:
+        return Item.SEARCH['duration']
 
     def __init__(self, content_path: str, find_neighbors: bool = False) -> None:
         self.content_path = content_path
@@ -81,14 +125,13 @@ class Item:
             self.size_unit = 'kB'
 
         # Get favorite status
-        if Item.FAV_LIST is None:
-            if not os.path.exists(self.FAV_LIST_PATH):
-                Item.FAV_LIST = []
-                Item.update_fav_list()
-            else:
-                with open(self.FAV_LIST_PATH) as f:
-                    new_fav_list = json.load(f)
-                    Item.FAV_LIST = new_fav_list
+        if not os.path.exists(self.FAV_LIST_PATH):
+            Item.FAV_LIST = []
+            Item.update_fav_list()
+        else:
+            with open(self.FAV_LIST_PATH) as f:
+                new_fav_list = json.load(f)
+                Item.FAV_LIST = new_fav_list
 
         self.is_favorite = self.content_path in Item.FAV_LIST
 

@@ -8,12 +8,12 @@
         <input type="text" name="keyword" required>
         <input type="submit" value="search">
     </form>
-    {% if item_list %}
+    {% if item_list is not none %}
     <h1>Results for
         <em>{{ search_keyword }}</em>
     </h1>
     {% include 'content/include/item-list.html.jinja2' %}
-    <p>Search took {{ search_duration }} seconds.</p>
+    <p>Search took {{ search_duration | round(3) }} seconds.</p>
     {% endif %}
 </div>
 {% endblock main %}
