@@ -259,6 +259,8 @@ class Item:
         if os.path.exists(self.thumb_path):
             return True
 
+        current_app.logger.info(f'Generating thumb for: {self.file_name}')
+
         # Generate thumb
         if self.type == 'video':
             with av.open(self.full_path) as in_container:
@@ -390,6 +392,8 @@ class Item:
 
         if os.path.exists(self.poster_path):
             return True
+
+        current_app.logger.info(f'Generating poster for: {self.file_name}')
 
         with av.open(self.thumb_path) as container:
 
