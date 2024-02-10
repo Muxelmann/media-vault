@@ -150,8 +150,8 @@ a {
 
 .neighbors>* {
     position: fixed;
-    top: 0;
-    bottom: 0;
+    top: 20vh;
+    bottom: 20vh;
     width: 1rem;
     display: flex;
     align-items: center;
