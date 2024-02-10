@@ -8,7 +8,7 @@ from flask import abort, send_file, url_for, current_app
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 VIDEO_SUFFIX = ('mov', 'mp4', 'm4v')
-IMAGE_SUFFIX = ('jpeg', 'jpg', 'png', 'gif')
+IMAGE_SUFFIX = ('jpeg', 'jpg', 'png', 'gif', 'webp')
 
 
 class Item:
