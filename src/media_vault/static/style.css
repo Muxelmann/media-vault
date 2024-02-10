@@ -157,11 +157,11 @@ a {
     align-items: center;
 }
 
-.neighbors .previous {
+#previous-neighbor {
     left: 0;
 }
 
-.neighbors .next {
+#next-neighbor {
     right: 0;
 }
 

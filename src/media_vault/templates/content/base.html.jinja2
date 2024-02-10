@@ -38,10 +38,11 @@
 
 <div class="neighbors">
     {% if item.previous_neighbor %}
-    <a class="previous" href="{{ url_for('.get_content', content_path=item.previous_neighbor.content_path) }}">←</a>
+    <a id="previous-neighbor"
+        href="{{ url_for('.get_content', content_path=item.previous_neighbor.content_path) }}">←</a>
     {% endif %}
     {% if item.next_neighbor %}
-    <a class="next" href="{{ url_for('.get_content', content_path=item.next_neighbor.content_path) }}">→</a>
+    <a id="next-neighbor" href="{{ url_for('.get_content', content_path=item.next_neighbor.content_path) }}">→</a>
     {% endif %}
 </div>
 
