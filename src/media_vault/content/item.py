@@ -309,16 +309,21 @@ class Item:
                         return [diff * i + a for i in range(n)]
 
                     for offset in linspace(0, in_container.duration, Item.THUMB_FRAMES_COUNT):
-                        in_container.seek(int(offset))
-                        in_frame = next(in_container.decode(in_stream))
-                        img = in_frame.to_image().resize((new_width, new_height))
+                        try:
+                            in_container.seek(int(offset))
+                            in_frame = next(in_container.decode(in_stream))
+                            img = in_frame.to_image().resize((new_width, new_height))
 
-                        # Note: to_image and from_image is not required in this specific example.
-                        out_frame = av.VideoFrame.from_image(img)
-                        out_packet = out_stream.encode(
-                            out_frame)  # Encode video frame
-                        # "Mux" the encoded frame (add the encoded frame to MP4 file).
-                        out_container.mux(out_packet)
+                            # Note: to_image and from_image is not required in this specific example.
+                            out_frame = av.VideoFrame.from_image(img)
+                            out_packet = out_stream.encode(
+                                out_frame)  # Encode video frame
+                            # "Mux" the encoded frame (add the encoded frame to MP4 file).
+                            out_container.mux(out_packet)
+                        except Exception as e:
+                            current_app.logger.error(
+                                f'Failed to fully convert -> saving current state')
+                            break
 
                     # Flush the encoder
                     out_packet = out_stream.encode(None)
