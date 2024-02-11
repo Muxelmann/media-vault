@@ -25,5 +25,14 @@ document.addEventListener('keyup', (e) => {
             let href = a.getAttribute('href');
             window.open(href, '_self');
         }
+    } else if (e.key == 'ArrowUp') {
+        console.log('up');
+        let a = document.getElementById('up-link');
+        if (a) {
+            let href = a.getAttribute('href');
+            window.open(href, '_self');
+        } else {
+            window.open('/', '_self');
+        }
     }
 });

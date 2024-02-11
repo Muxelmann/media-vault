@@ -8,13 +8,16 @@
         <li><a href="{{ url_for('.get_content') }}">🏠</a></li>
         {% for breadcrumb in g.breadcrumbs %}
         {% set content_path = g.breadcrumbs[:loop.index] | join('/') %}
-        <li><a href="{{ url_for('.get_content', content_path=content_path) }}">
+        <li>
+            <a{% if loop.index==g.breadcrumbs | length - 1%} id="up-link" {% endif %}
+                href="{{ url_for('.get_content', content_path=content_path) }}">
                 {% if '.' in breadcrumb %}
                 🍿
                 {% else %}
                 🗂️
                 {% endif %}
-            </a></li>
+                </a>
+        </li>
         {% endfor %}
     </ul>
     <ul class="manage">
