@@ -345,7 +345,7 @@ class Item:
                 if hasattr(img, 'is_animated') and img.is_animated:
                     frames = ImageSequence.Iterator(img)
                     frames = [f.resize((new_width, new_height))
-                              for f in frames]
+                              for f in frames if f.width/f.height == aspect_ratio]
                     out_img = frames[0]
                     out_img.info = img.info
                     out_img.save(
