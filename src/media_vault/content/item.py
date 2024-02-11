@@ -2,6 +2,7 @@ import os
 import av
 import json
 import time
+import shutil
 from PIL import Image, ImageSequence, ImageFile
 from flask import abort, send_file, url_for, current_app
 
@@ -419,8 +420,9 @@ class Item:
 
     def delete_thumb(self) -> None:
         if self.is_dir:
-            for item in self.content_list:
-                item.delete_thumb()
+            current_app.logger.info(
+                f'Deleting thumbs/posters for {self.content_path}')
+            shutil.rmtree(self.thumb_path)
         else:
             if os.path.exists(self.thumb_path):
                 os.remove(self.thumb_path)
