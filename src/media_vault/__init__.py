@@ -64,8 +64,16 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
 
         # Test what is requested based on arguments of GET request...
 
+        # ... remove thumbnails to reload them
+        if request.args.get('reload_thumbs') is not None:
+            item.delete_thumb()
+            return redirect(url_for(
+                '.get_content',
+                content_path=item.content_path
+            ))
+
         # ... list favorites
-        if request.args.get('favorites', default=None) is not None:
+        if request.args.get('favorites') is not None:
             return render_template(
                 'content/item-list.html.jinja2',
                 item=item,
@@ -83,15 +91,15 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
             )
 
         # ... raw file
-        if request.args.get('raw', default=None) is not None:
+        if request.args.get('raw') is not None:
             return item.raw
 
         # ... thumb file
-        if request.args.get('thumb', default=None) is not None:
+        if request.args.get('thumb') is not None:
             return item.thumb
 
         # ... poster file
-        if request.args.get('poster', default=None) is not None:
+        if request.args.get('poster') is not None:
             return item.poster
 
         if content_path != '':

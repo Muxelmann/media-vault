@@ -259,7 +259,7 @@ class Item:
         if os.path.exists(self.thumb_path):
             return True
 
-        current_app.logger.info(f'Generating thumb for: {self.file_name}')
+        current_app.logger.info(f'Generating thumb for: {self.content_path}')
 
         # Generate thumb
         if self.type == 'video':
@@ -393,7 +393,7 @@ class Item:
         if os.path.exists(self.poster_path):
             return True
 
-        current_app.logger.info(f'Generating poster for: {self.file_name}')
+        current_app.logger.info(f'Generating poster for: {self.content_path}')
 
         with av.open(self.thumb_path) as container:
 
@@ -416,6 +416,20 @@ class Item:
                 break
 
             return True
+
+    def delete_thumb(self) -> None:
+        if self.is_dir:
+            for item in self.content_list:
+                item.delete_thumb()
+        else:
+            if os.path.exists(self.thumb_path):
+                os.remove(self.thumb_path)
+                current_app.logger.info(
+                    f'Deleting thumb for {self.content_path}')
+            if os.path.exists(self.poster_path):
+                os.remove(self.poster_path)
+                current_app.logger.info(
+                    f'Deleting poster for {self.content_path}')
 
     @property
     def raw_url(self) -> str:

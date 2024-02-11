@@ -19,6 +19,7 @@
     </ul>
     <ul class="manage">
         <li><a onclick="toggleView();">📋</a></li>
+        <li><a href="{{ url_for('.get_content', content_path=item.content_path, reload_thumbs=True) }}">♻️</a></li>
         <li><a href="{{ url_for('.get_content', content_path=item.content_path, favorites=True) }}">⭐️</a></li>
 
         {% if g.breadcrumbs|length > 0 %}
