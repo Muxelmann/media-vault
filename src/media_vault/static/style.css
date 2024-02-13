@@ -35,6 +35,13 @@ a {
     color: black;
 }
 
+.title {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .nav {
     display: flex;
     align-items: center;
