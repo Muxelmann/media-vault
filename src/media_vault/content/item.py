@@ -133,6 +133,12 @@ class Item:
             self.poster_path = os.path.join(os.path.split(
                 self.thumb_path)[0], f'{self.name}.png')
 
+            with av.open(self.full_path) as container:
+                # Test if a video is present
+                if len(container.streams.video) > 0:
+                    stream = container.streams.video[0]
+                    self.duration = int(stream.duration * stream.time_base)
+
         # For size information
         if self.size > 2**30:
             self.size //= 2**30
@@ -235,6 +241,13 @@ class Item:
             return abort(500)
 
         return send_file(self.thumb_path)
+
+    @property
+    def loops(self) -> bool:
+        if self.type != 'video':
+            return False
+
+        return self.duration <= 30
 
     def make_thumb(self) -> bool:
         """Generates thumbs for a given media file.
