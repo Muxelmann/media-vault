@@ -8,7 +8,7 @@ def check_access(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
         if g.user is None:
-            current_app.logger.info('access denied')
+            current_app.logger.info(f'ACCESS DENIED: {request.url}')
             return redirect(url_for('auth.login', next_url=request.url))
         return f(*args, **kwargs)
 
@@ -29,6 +29,7 @@ def make_bp(tmp_path: str):
 
             user = User(name)
             user.register(password)
+            current_app.logger.info(f'REGISTER: {user.id}')
             return redirect(url_for('auth.login', next_url=next_url))
 
         return render_template('auth/register.html.jinja2', next_url=next_url)
@@ -44,6 +45,7 @@ def make_bp(tmp_path: str):
             if user.login(password):
                 session.clear()
                 session['user_id'] = user.id
+                current_app.logger.info(f'LOGIN: {user.id}')
                 return redirect(next_url)
 
         return render_template('auth/login.html.jinja2', next_url=next_url)
