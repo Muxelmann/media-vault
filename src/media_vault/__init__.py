@@ -20,9 +20,11 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
 
     app.secret_key = secret_key
 
-    gunicorn_logger = logging.getLogger('gunicorn.error')
-    app.logger.handlers = gunicorn_logger.handlers
-    app.logger.setLevel(gunicorn_logger.level)
+    # Link logger to gunicorn in deployment
+    if os.getenv('FLASK_DEBUG') != '1':
+        gunicorn_logger = logging.getLogger('gunicorn.error')
+        app.logger.handlers = gunicorn_logger.handlers
+        app.logger.setLevel(gunicorn_logger.level)
 
     Item.DATA_PATH = data_path
     Item.THUMB_PATH = os.path.join(tmp_path, 'thumb')
