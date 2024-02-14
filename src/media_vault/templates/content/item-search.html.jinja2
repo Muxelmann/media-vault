@@ -1,10 +1,9 @@
 {% extends 'content/base.html.jinja2' %}
 
 {% block main %}
-<div class="item-search">
+<div class="content-form">
     <h1>Search</h1>
-    <form class="item-search-form" action="{{ url_for('.manage', content_path=item.content_path, search=True) }}"
-        method="post">
+    <form action="{{ url_for('content.manage', content_path=item.content_path, search=True) }}" method="post">
         <input type="text" name="keyword" required>
         <input type="submit" value="search">
     </form>

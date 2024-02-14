@@ -218,7 +218,7 @@ class Item:
 
     @property
     def thumb_url(self) -> str:
-        return url_for('get_content', content_path=self.content_path, thumb=True)
+        return url_for('content.get', content_path=self.content_path, thumb=True)
 
     @property
     def thumb(self) -> str:
@@ -377,7 +377,7 @@ class Item:
 
     @property
     def poster_url(self) -> str:
-        return url_for('get_content', content_path=self.content_path, poster=True)
+        return url_for('content.get', content_path=self.content_path, poster=True)
 
     @property
     def poster(self) -> str:
@@ -453,7 +453,7 @@ class Item:
 
     @property
     def raw_url(self) -> str:
-        return url_for('get_content', content_path=self.content_path, raw=True)
+        return url_for('content.get', content_path=self.content_path, raw=True)
 
     @property
     def raw(self) -> str:

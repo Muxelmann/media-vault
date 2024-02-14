@@ -1,7 +1,7 @@
 <ul id="item-list" class="item-list">
     {% for item in item_list %}
     <li class="item">
-        <a href="{{ url_for('get_content', content_path=item.content_path) }}">
+        <a href="{{ url_for('content.get', content_path=item.content_path) }}">
 
             {% if item.type == 'image' %}
 

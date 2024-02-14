@@ -3,15 +3,19 @@
 {% block html_body %}
 <a id="top"></a>
 
-<div class="title">{{item.name}}</div>
+<div class="title">{% if item.name %}
+    {{item.name}}
+    {% else %}
+    Home
+    {% endif %}</div>
 <div class="nav">
     <ul class="breadcrumbs">
-        <li><a href="{{ url_for('.get_content') }}">🏠</a></li>
+        <li><a href="{{ url_for('content.get') }}">🏠</a></li>
         {% for breadcrumb in g.breadcrumbs %}
         {% set content_path = g.breadcrumbs[:loop.index] | join('/') %}
         <li>
             <a{% if loop.index==g.breadcrumbs | length - 1%} id="up-link" {% endif %}
-                href="{{ url_for('.get_content', content_path=content_path) }}">
+                href="{{ url_for('content.get', content_path=content_path) }}">
                 {% if '.' in breadcrumb %}
                 🍿
                 {% else %}
@@ -23,19 +27,20 @@
     </ul>
     <ul class="manage">
         <li><a onclick="toggleView();">📋</a></li>
-        <li><a href="{{ url_for('.get_content', content_path=item.content_path, reload_thumbs=True) }}">♻️</a></li>
-        <li><a href="{{ url_for('.get_content', content_path=item.content_path, favorites=True) }}">⭐️</a></li>
+        <li><a href="{{ url_for('content.get', content_path=item.content_path, reload_thumbs=True) }}">♻️</a></li>
+        <li><a href="{{ url_for('content.get', content_path=item.content_path, favorites=True) }}">⭐️</a></li>
 
         {% if g.breadcrumbs|length > 0 %}
         <li>
-            <form action="{{ url_for('.manage', content_path=item.content_path, toggle_favorite=item.content_path) }}"
+            <form
+                action="{{ url_for('content.manage', content_path=item.content_path, toggle_favorite=item.content_path) }}"
                 method="post">
                 <input type="checkbox" class="toggle-favorite" name="toggle-favorite" onchange="toggleFavorite(this);"
                     {% if item.is_favorite %} checked{% endif %}>
             </form>
         </li>
         {% endif %}
-        <li><a href="{{ url_for('.get_content', content_path=item.content_path, search=True) }}">🔎</a></li>
+        <li><a href="{{ url_for('content.get', content_path=item.content_path, search=True) }}">🔎</a></li>
     </ul>
 </div>
 
@@ -44,14 +49,14 @@
 <div class="neighbors">
     {% if item.previous_neighbor %}
     <a id="previous-neighbor"
-        href="{{ url_for('.get_content', content_path=item.previous_neighbor.content_path) }}">←</a>
+        href="{{ url_for('content.get', content_path=item.previous_neighbor.content_path) }}">←</a>
     {% endif %}
     {% if item.next_neighbor %}
-    <a id="next-neighbor" href="{{ url_for('.get_content', content_path=item.next_neighbor.content_path) }}">→</a>
+    <a id="next-neighbor" href="{{ url_for('content.get', content_path=item.next_neighbor.content_path) }}">→</a>
     {% endif %}
 </div>
 
-<a class="to-top" href="#top">🔝</a>
+<div class="to-top"><a href="#top">🔝</a> <a href="{{ url_for('auth.logout') }}">🔐</a></div>
 
 <script src="{{ url_for('static', filename='script.js') }}"></script>
 {% endblock html_body %}

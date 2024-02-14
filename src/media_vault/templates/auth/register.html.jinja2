@@ -1,0 +1,17 @@
+{% extends 'base.html.jinja2' %}
+
+{% block html_body %}
+
+<div class="content-form">
+    <h1>Register</h1>
+    <form action="{{ url_for('auth.register', next_url=next_url) }}" method="post">
+        <input type="text" name="username" placeholder="Username">
+        <input type="password" name="password" placeholder="Password">
+        <input type="submit" value="Register">
+    </form>
+    <p>
+        Or login <a href="{{ url_for('auth.login', next_url=next_url) }}">here</a>.
+    </p>
+</div>
+
+{% endblock %}
