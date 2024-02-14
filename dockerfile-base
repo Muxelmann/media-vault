@@ -29,7 +29,8 @@ RUN \
     build-essential \
     libjpeg-dev \
     zlib1g-dev \
-    ffmpeg && \
+    ffmpeg \
+    libffi-dev && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
