@@ -53,6 +53,8 @@ def make_bp(tmp_path: str):
     @bp.route('/logout')
     def logout():
         session.clear()
+        if g.user is not None:
+            g.user.logout()
         return redirect(url_for('content.get'))
 
     @bp.before_app_request

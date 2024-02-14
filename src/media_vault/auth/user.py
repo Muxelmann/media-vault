@@ -7,6 +7,7 @@ import time
 class User:
 
     DB = None
+    LOGGED_IN_USERS = {}
     MAX_INACTIVITY = 1800
 
     @classmethod
@@ -26,68 +27,98 @@ class User:
 
     def __init__(self, id: str) -> None:
         self.id = id
+        self.conn = sqlite3.connect(User.DB)
+        self.cur = self.conn.cursor()
+
+    def __del__(self) -> None:
+        self.cur.close()
+        self.conn.close()
 
     def is_online(self) -> bool:
-        conn = sqlite3.connect(User.DB)
-        cur = conn.cursor()
 
-        last_active = cur.execute(
-            '''SELECT last_active FROM users WHERE id = ?''',
-            (self.id,)
-        ).fetchone()
+        # Get the current time
+        current_time = time.time()
 
-        if last_active is None or time.time() - last_active[0] > User.MAX_INACTIVITY:
-            cur.close()
-            conn.close()
-            return False
+        # If user's last activity is not logged, get it from DB
+        if self.id not in User.LOGGED_IN_USERS.keys():
+            last_active = self.cur.execute(
+                '''SELECT last_active FROM users WHERE id = ?''',
+                (self.id,)
+            ).fetchone()
 
-        cur.execute(
-            '''UPDATE users SET last_active = ? WHERE id = ?''',
-            (time.time(), self.id)
-        )
-        conn.commit()
+            if last_active is None:
+                return False
 
-        cur.close()
-        conn.close()
-        return True
+            if current_time - last_active[0] > User.MAX_INACTIVITY:
+                return False
+
+            # If user has recently been active, cache activity time and update DB
+            User.LOGGED_IN_USERS[self.id] = [current_time, current_time]
+            self.cur.execute(
+                '''UPDATE users SET last_active = ? WHERE id = ?''',
+                (User.LOGGED_IN_USERS[self.id][1], self.id)
+            )
+            self.conn.commit()
+            return True
+
+        # If user's last activity is logged, check if user has recently been active
+        if current_time - User.LOGGED_IN_USERS[self.id][0] < User.MAX_INACTIVITY:
+
+            # Update cached activity
+            User.LOGGED_IN_USERS[self.id][0] = current_time
+
+            # If DB laggs behind too far, update it
+            if current_time - User.LOGGED_IN_USERS[self.id][1] > User.MAX_INACTIVITY:
+                self.cur.execute(
+                    '''UPDATE users SET last_active = ? WHERE id = ?''',
+                    (User.LOGGED_IN_USERS[self.id][1], self.id)
+                )
+                self.conn.commit()
+
+            return True
+
+        # Delete user from cache is inactive for too long
+        del User.LOGGED_IN_USERS[self.id]
+        return False
 
     def register(self, password: str) -> None:
+        # Generate hashed password
         hashed_password = bcrypt.hashpw(
             password.encode('utf-8'), bcrypt.gensalt())
 
-        conn = sqlite3.connect(User.DB)
-        cur = conn.cursor()
-
-        cur.execute(
+        # Save user
+        self.cur.execute(
             '''INSERT INTO users (id, hashed_password, last_active) VALUES (?, ?, ?)''',
-            (self.id, hashed_password, 0.0)
+            (self.id, hashed_password, time.time())
         )
-        conn.commit()
-
-        cur.close()
-        conn.close()
+        self.conn.commit()
 
     def login(self, password: str) -> bool:
-
-        conn = sqlite3.connect(User.DB)
-        cur = conn.cursor()
-
-        hashed_password = cur.execute(
+        # Obtain hashed password
+        hashed_password = self.cur.execute(
             '''SELECT hashed_password FROM users WHERE id = ?''',
             (self.id, )
         ).fetchone()
 
-        if hashed_password is not None and bcrypt.checkpw(password.encode('utf-8'), hashed_password[0]):
-            cur.execute(
-                '''UPDATE users SET last_active = ? WHERE id = ?''',
-                (time.time(), self.id)
-            )
-            conn.commit()
+        # If no password found, return
+        if hashed_password is None:
+            return False
 
-            cur.close()
-            conn.close()
+        # Check if password is correct
+        if bcrypt.checkpw(password.encode('utf-8'), hashed_password[0]):
+            # Update user's activity
+            current_time = time.time()
+            User.LOGGED_IN_USERS[self.id] = [current_time, current_time]
+            self.cur.execute(
+                '''UPDATE users SET last_active = ? WHERE id = ?''',
+                (current_time, self.id)
+            )
+            self.conn.commit()
             return True
 
-        cur.close()
-        conn.close()
         return False
+
+    def logout(self) -> None:
+        # If activity is logged, delete its entry
+        if self.id in User.LOGGED_IN_USERS.keys():
+            del User.LOGGED_IN_USERS[self.id]
