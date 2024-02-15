@@ -7,11 +7,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
     {% block meta %}{% endblock meta %}
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    {% if g.extra_styles %}
+    {% for style in g.extra_styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename=style) }}">
+    {% endfor %}
+    {% endif %}
     <title>Vault</title>
 </head>
 
 <body>
+    {% if g.pre_main_divs %}
+    {% for div in g.pre_main_divs %}{{ div }}{% endfor %}
+    {% endif %}
     {% block html_body %}{% endblock html_body %}
+    {% if g.post_main_divs %}
+    {% for div in g.post_main_divs %}{{ div }}{% endfor %}
+    {% endif %}
 </body>
 
 </html>

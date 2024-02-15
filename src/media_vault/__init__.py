@@ -4,6 +4,7 @@ import logging
 
 from . import content
 from . import auth
+from . import backgrounds
 
 
 def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
@@ -32,5 +33,8 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
 
     content_bp = content.make_bp(data_path, tmp_path)
     app.register_blueprint(content_bp)
+
+    background_bp = backgrounds.make_bp(data_path)
+    app.register_blueprint(background_bp)
 
     return app
