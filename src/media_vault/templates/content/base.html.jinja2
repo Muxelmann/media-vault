@@ -56,7 +56,11 @@
     {% endif %}
 </div>
 
-<div class="to-top"><a href="#top">🔝</a> <a href="{{ url_for('auth.logout') }}">🔐</a></div>
+<div class="to-top">
+    <a href="#top">🔝</a>
+    <a href="{{ url_for('auth.register') }}">🔏</a>
+    <a href="{{ url_for('auth.logout') }}">🔐</a>
+</div>
 
 <script src="{{ url_for('static', filename='script.js') }}"></script>
 {% endblock html_body %}
