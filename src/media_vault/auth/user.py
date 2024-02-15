@@ -25,6 +25,20 @@ class User:
         cur.close()
         conn.close()
 
+    @classmethod
+    def at_least_one_exists(cls) -> None:
+        conn = sqlite3.connect(User.DB)
+        cur = conn.cursor()
+
+        a_user = cur.execute(
+            '''SELECT id FROM users'''
+        ).fetchone()
+
+        cur.close()
+        conn.close()
+
+        return a_user is not None
+
     def __init__(self, id: str) -> None:
         self.id = id
         self.conn = sqlite3.connect(User.DB)

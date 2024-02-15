@@ -7,7 +7,7 @@ def check_access(f):
 
     @wraps(f)
     def wrapper(*args, **kwargs):
-        if g.user is None:
+        if g.user is None and User.at_least_one_exists():
             current_app.logger.info(f'ACCESS DENIED: {request.url}')
             return redirect(url_for('auth.login', next_url=request.url))
         return f(*args, **kwargs)
