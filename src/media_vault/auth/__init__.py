@@ -21,6 +21,7 @@ def make_bp(tmp_path: str):
     bp = Blueprint('auth', __name__, url_prefix='/auth')
 
     @bp.route('/register', methods=['GET', 'POST'])
+    @check_access
     def register():
         next_url = request.args.get('next_url', url_for('content.get'))
         if request.method == 'POST':
