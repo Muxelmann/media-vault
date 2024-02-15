@@ -219,9 +219,7 @@ p a:hover {
 .to-top {
     position: fixed;
     bottom: var(--item-gap);
-    right: calc(2 * var(--item-gap));
-    width: calc(2*var(--item-gap));
-    height: calc(2*var(--item-gap));
+    right: var(--item-gap);
     display: flex;
     gap: var(--item-gap);
     align-items: center;
