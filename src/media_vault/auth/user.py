@@ -1,64 +1,48 @@
-import sqlite3
 import os
 import bcrypt
 import time
 
+from ..database import Database
+
 
 class User:
 
-    DB = None
     LOGGED_IN_USERS = {}
     MAX_INACTIVITY = 1800
 
     @classmethod
-    def init(cls, tmp_path: str) -> None:
-        User.DB = os.path.join(tmp_path, 'database.db')
-        conn = sqlite3.connect(User.DB)
-
-        cur = conn.cursor()
-
-        cur.execute(
+    def init(cls) -> None:
+        db = Database()
+        db.execute(
             '''CREATE TABLE IF NOT EXISTS users
             (id TEXT PRIMARY KEY, hashed_password TEXT, last_active REAL)'''
         )
 
-        cur.close()
-        conn.close()
-
     @classmethod
     def at_least_one_exists(cls) -> None:
-        conn = sqlite3.connect(User.DB)
-        cur = conn.cursor()
-
-        a_user = cur.execute(
-            '''SELECT id FROM users'''
-        ).fetchone()
-
-        cur.close()
-        conn.close()
+        db = Database()
+        a_user = db.execute(
+            '''SELECT id FROM users''',
+            fetchone=True
+        )
 
         return a_user is not None
 
     def __init__(self, id: str) -> None:
         self.id = id
-        self.conn = sqlite3.connect(User.DB)
-        self.cur = self.conn.cursor()
-
-    def __del__(self) -> None:
-        self.cur.close()
-        self.conn.close()
+        self.db = Database()
 
     def is_online(self) -> bool:
-
         # Get the current time
         current_time = time.time()
 
         # If user's last activity is not logged, get it from DB
         if self.id not in User.LOGGED_IN_USERS.keys():
-            last_active = self.cur.execute(
+            last_active = self.db.execute(
                 '''SELECT last_active FROM users WHERE id = ?''',
-                (self.id,)
-            ).fetchone()
+                (self.id,),
+                fetchone=True
+            )
 
             if last_active is None:
                 return False
@@ -68,11 +52,10 @@ class User:
 
             # If user has recently been active, cache activity time and update DB
             User.LOGGED_IN_USERS[self.id] = [current_time, current_time]
-            self.cur.execute(
+            self.db.execute(
                 '''UPDATE users SET last_active = ? WHERE id = ?''',
                 (User.LOGGED_IN_USERS[self.id][1], self.id)
             )
-            self.conn.commit()
             return True
 
         # If user's last activity is logged, check if user has recently been active
@@ -83,11 +66,10 @@ class User:
 
             # If DB laggs behind too far, update it
             if current_time - User.LOGGED_IN_USERS[self.id][1] > User.MAX_INACTIVITY:
-                self.cur.execute(
+                self.db.execute(
                     '''UPDATE users SET last_active = ? WHERE id = ?''',
                     (User.LOGGED_IN_USERS[self.id][1], self.id)
                 )
-                self.conn.commit()
 
             return True
 
@@ -101,18 +83,18 @@ class User:
             password.encode('utf-8'), bcrypt.gensalt())
 
         # Save user
-        self.cur.execute(
+        self.db.execute(
             '''INSERT INTO users (id, hashed_password, last_active) VALUES (?, ?, ?)''',
             (self.id, hashed_password, time.time())
         )
-        self.conn.commit()
 
     def login(self, password: str) -> bool:
         # Obtain hashed password
-        hashed_password = self.cur.execute(
+        hashed_password = self.db.execute(
             '''SELECT hashed_password FROM users WHERE id = ?''',
-            (self.id, )
-        ).fetchone()
+            (self.id, ),
+            fetchone=True
+        )
 
         # If no password found, return
         if hashed_password is None:
@@ -123,11 +105,10 @@ class User:
             # Update user's activity
             current_time = time.time()
             User.LOGGED_IN_USERS[self.id] = [current_time, current_time]
-            self.cur.execute(
+            self.db.execute(
                 '''UPDATE users SET last_active = ? WHERE id = ?''',
                 (current_time, self.id)
             )
-            self.conn.commit()
             return True
 
         return False

@@ -16,7 +16,7 @@ def check_access(f):
 
 
 def make_bp(tmp_path: str):
-    User.init(tmp_path)
+    User.init()
 
     bp = Blueprint('auth', __name__, url_prefix='/auth')
 

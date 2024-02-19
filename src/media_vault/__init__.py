@@ -2,6 +2,7 @@ from flask import Flask
 import os
 import logging
 
+from .database import Database
 from . import content
 from . import auth
 
@@ -26,6 +27,8 @@ def make_app(secret_key: str, data_path: str, tmp_path: str) -> Flask:
         gunicorn_logger = logging.getLogger('gunicorn.error')
         app.logger.handlers = gunicorn_logger.handlers
         app.logger.setLevel(gunicorn_logger.level)
+
+    Database.init(tmp_path)
 
     auth_bp = auth.make_bp(tmp_path)
     app.register_blueprint(auth_bp)
