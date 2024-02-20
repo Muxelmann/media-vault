@@ -1,4 +1,3 @@
-import os
 import bcrypt
 import time
 
@@ -15,7 +14,19 @@ class User:
         db = Database()
         db.execute(
             '''CREATE TABLE IF NOT EXISTS users
-            (id TEXT PRIMARY KEY, hashed_password TEXT, last_active REAL)'''
+            (
+                id TEXT PRIMARY KEY,
+                hashed_password TEXT NOT NULL,
+                last_active REAL NOT NULL
+            )'''
+        )
+        db.execute(
+            '''CREATE TABLE IF NOT EXISTS favorites
+            (
+                user_id TEXT NOT NULL,
+                content_path TEXT NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES users (id)
+            )'''
         )
 
     @classmethod
@@ -117,3 +128,21 @@ class User:
         # If activity is logged, delete its entry
         if self.id in User.LOGGED_IN_USERS.keys():
             del User.LOGGED_IN_USERS[self.id]
+
+    @property
+    def favorites(self) -> list[str]:
+        """Produces a list of content paths indicating the favorites of this user.
+
+        Returns:
+            list[str]: The list of favorites as content paths
+        """
+        print(f'Getting favorites for {self.id}')
+        content_paths = self.db.execute(
+            '''SELECT content_path FROM favorites WHERE user_id = ?''',
+            (self.id, )
+        )
+        return content_paths
+
+    def add_favorite(self, content_path: str) -> None:
+        print(f'Adding favorite as "{content_path}" for {self.id}')
+        pass

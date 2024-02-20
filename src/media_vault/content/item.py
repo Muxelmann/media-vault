@@ -1,10 +1,9 @@
 import os
 import av
-import json
 import time
 import shutil
 from PIL import Image, ImageSequence, ImageFile
-from flask import abort, send_file, url_for, current_app
+from flask import abort, send_file, url_for, current_app, g
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
@@ -17,33 +16,11 @@ class Item:
     THUMB_PATH = None
     THUMB_MIN_SIZE = 200
     THUMB_FRAMES_COUNT = 30
-    FAV_LIST_PATH = None
-    FAV_LIST = None
     SEARCH = {
         'keyword': None,
         'results': None,
         'duration': 0.0
     }
-
-    @classmethod
-    def update_fav_list(cls) -> None:
-        """Saves the current value of FAV_LIST to the FAV_LIST_PATH.
-
-        Saving is not performed if either of these values is `None`.
-        """
-        # Make folder structure to save thumb
-        base_path = os.path.split(Item.FAV_LIST_PATH)[0]
-        if not os.path.exists(base_path):
-            try:
-                os.makedirs(base_path)
-            except FileExistsError:
-                pass
-
-        # Save list of favorites
-        if Item.FAV_LIST is None or Item.FAV_LIST_PATH is None:
-            return
-        with open(Item.FAV_LIST_PATH, 'w') as f:
-            json.dump(Item.FAV_LIST, f)
 
     @classmethod
     def get_favorites_list(cls) -> list['Item']:
@@ -52,13 +29,12 @@ class Item:
         Returns:
             list[Item]: The list of favorite items
         """
-        if cls.FAV_LIST is None:
+
+        if g.user is None:
+            print(f'NO USER LOGGED IN')
             return []
 
-        item_list = [
-            Item(content_path) for content_path in cls.FAV_LIST
-        ]
-        return item_list
+        return [Item(favorite) for favorite in g.user.favorites]
 
     @classmethod
     def search(cls, keyword: str) -> None:
@@ -150,17 +126,6 @@ class Item:
             self.size //= 2**10
             self.size_unit = 'kB'
 
-        # Get favorite status
-        if not os.path.exists(self.FAV_LIST_PATH):
-            Item.FAV_LIST = []
-            Item.update_fav_list()
-        else:
-            with open(self.FAV_LIST_PATH) as f:
-                new_fav_list = json.load(f)
-                Item.FAV_LIST = new_fav_list
-
-        self.is_favorite = self.content_path in Item.FAV_LIST
-
         # Get neighboring information for going to next and previous
         if find_neighbors:
             self.previous_neighbor = None
@@ -175,15 +140,11 @@ class Item:
                 self.next_neighbor = content_in_folder[idx + 1]
 
     def set_favorite(self, is_favorite: bool) -> None:
-        self.is_favorite = is_favorite
-        if self.is_favorite:
-            if self.content_path not in Item.FAV_LIST:
-                Item.FAV_LIST.append(self.content_path)
-                Item.update_fav_list()
-        else:
-            if self.content_path in Item.FAV_LIST:
-                Item.FAV_LIST.remove(self.content_path)
-                Item.update_fav_list()
+        if g.user is None:
+            print(f'NO USER LOGGED IN')
+            return
+
+        g.user.add_favorite(self.content_path)
 
     def __lt__(self, other: 'Item') -> bool:
         return self.name < other.name

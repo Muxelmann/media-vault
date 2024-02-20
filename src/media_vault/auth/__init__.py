@@ -60,9 +60,9 @@ def make_bp(tmp_path: str):
 
     @bp.before_app_request
     def get_logged_in_user():
-        user_id = session.get('user_id')
-
         g.user = None
+
+        user_id = session.get('user_id')
         if user_id is not None:
             user = User(user_id)
             if user.is_online():

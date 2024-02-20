@@ -4,6 +4,8 @@ from flask import Blueprint, redirect, url_for, abort, request, render_template,
 from .item import Item
 from .. import auth
 
+from ..database import Database
+
 
 def make_bp(data_path: str, tmp_path: str) -> Blueprint:
 
@@ -11,7 +13,6 @@ def make_bp(data_path: str, tmp_path: str) -> Blueprint:
 
     Item.DATA_PATH = data_path
     Item.THUMB_PATH = os.path.join(tmp_path, 'thumb')
-    Item.FAV_LIST_PATH = os.path.join(tmp_path, 'favorites.json')
 
     @bp.route("/", defaults={'content_path': ""})
     @bp.route("/<path:content_path>")
