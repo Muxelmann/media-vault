@@ -132,6 +132,7 @@ def make_bp(data_path: str, tmp_path: str) -> Blueprint:
             item = Item(request.args.get('toggle_favorite'))
             is_favorite = request.form.get('toggle-favorite') == 'on'
             item.set_favorite(is_favorite)
+            return "OK"
 
         elif request.args.get('search') is not None:
             search_keyword = request.form.get('keyword', default='')

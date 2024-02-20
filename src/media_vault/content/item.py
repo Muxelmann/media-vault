@@ -31,10 +31,10 @@ class Item:
         """
 
         if g.user is None:
-            print(f'NO USER LOGGED IN')
             return []
 
-        return [Item(favorite) for favorite in g.user.favorites]
+        favorites = g.user.favorites
+        return [Item(favorite) for favorite in favorites]
 
     @classmethod
     def search(cls, keyword: str) -> None:
@@ -115,6 +115,12 @@ class Item:
                     stream = container.streams.video[0]
                     self.duration = int(stream.duration * stream.time_base)
 
+        # For Favorite indication
+        self.is_favorite = False
+        if g.user is not None:
+            favorites = g.user.favorites
+            self.is_favorite = self.content_path in favorites
+
         # For size information
         if self.size > 2**30:
             self.size //= 2**30
@@ -141,10 +147,12 @@ class Item:
 
     def set_favorite(self, is_favorite: bool) -> None:
         if g.user is None:
-            print(f'NO USER LOGGED IN')
             return
 
-        g.user.add_favorite(self.content_path)
+        if is_favorite:
+            g.user.add_favorite(self.content_path)
+        else:
+            g.user.remove_favorite(self.content_path)
 
     def __lt__(self, other: 'Item') -> bool:
         return self.name < other.name

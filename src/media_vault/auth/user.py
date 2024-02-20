@@ -25,6 +25,7 @@ class User:
             (
                 user_id TEXT NOT NULL,
                 content_path TEXT NOT NULL,
+                PRIMARY KEY (user_id, content_path),
                 FOREIGN KEY (user_id) REFERENCES users (id)
             )'''
         )
@@ -42,6 +43,7 @@ class User:
     def __init__(self, id: str) -> None:
         self.id = id
         self.db = Database()
+        self._favorites = []
 
     def is_online(self) -> bool:
         # Get the current time
@@ -99,6 +101,13 @@ class User:
             (self.id, hashed_password, time.time())
         )
 
+    def delete(self, password: str) -> bool:
+        if self.login(password):
+            self.db.execute(
+                '''DELETE FROM users WHERE user_id = ?''',
+                (self.id,)
+            )
+
     def login(self, password: str) -> bool:
         # Obtain hashed password
         hashed_password = self.db.execute(
@@ -136,13 +145,25 @@ class User:
         Returns:
             list[str]: The list of favorites as content paths
         """
-        print(f'Getting favorites for {self.id}')
-        content_paths = self.db.execute(
-            '''SELECT content_path FROM favorites WHERE user_id = ?''',
-            (self.id, )
-        )
-        return content_paths
+        if len(self._favorites) == 0:
+            self._favorites = self.db.execute(
+                '''SELECT content_path FROM favorites WHERE user_id = ?''',
+                (self.id, )
+            )
+            self._favorites = [c[0] for c in self._favorites]
+        return self._favorites
 
     def add_favorite(self, content_path: str) -> None:
-        print(f'Adding favorite as "{content_path}" for {self.id}')
-        pass
+        self.db.execute(
+            '''REPLACE INTO favorites (user_id, content_path) VALUES (?, ?)''',
+            (self.id, content_path)
+        )
+        self._favorites.append(content_path)
+
+    def remove_favorite(self, content_path: str) -> None:
+        self.db.execute(
+            '''DELETE FROM favorites WHERE user_id = ? AND content_path = ?''',
+            (self.id, content_path)
+        )
+        if content_path in self._favorites:
+            self._favorites.remove(content_path)
