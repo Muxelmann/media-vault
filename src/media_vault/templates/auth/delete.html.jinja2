@@ -1,0 +1,16 @@
+{% extends 'base.html.jinja2' %}
+
+{% block html_body %}
+
+<div class="content-form">
+    <h1>Delete <em>{{ g.user.id }}</em></h1>
+    <form action="{{ url_for('auth.delete') }}" method="post">
+        <input type="password" name="password" placeholder="Password">
+        <input type="submit" value="Delete">
+    </form>
+    <p>
+        Or go back to <a href="{{ url_for('content.get') }}">🏠</a>.
+    </p>
+</div>
+
+{% endblock %}

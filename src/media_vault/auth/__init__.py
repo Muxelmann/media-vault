@@ -51,6 +51,17 @@ def make_bp(tmp_path: str):
 
         return render_template('auth/login.html.jinja2', next_url=next_url)
 
+    @bp.route('/delete', methods=['GET', 'POST'])
+    @check_access
+    def delete():
+        if request.method == 'POST' and g.user is not None:
+            password = request.form.get('password')
+
+            if g.user.delete(password):
+                return logout()
+
+        return render_template('auth/delete.html.jinja2')
+
     @bp.route('/logout')
     def logout():
         session.clear()

@@ -104,9 +104,15 @@ class User:
     def delete(self, password: str) -> bool:
         if self.login(password):
             self.db.execute(
-                '''DELETE FROM users WHERE user_id = ?''',
+                '''DELETE FROM favorites WHERE user_id = ?''',
                 (self.id,)
             )
+            self.db.execute(
+                '''DELETE FROM users WHERE id = ?''',
+                (self.id,)
+            )
+            return True
+        return False
 
     def login(self, password: str) -> bool:
         # Obtain hashed password
