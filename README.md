@@ -61,7 +61,11 @@ docker build -t media-vault .
 
 2. Run the container:
 ```bash
-docker run -p 5000:5000 -v $(pwd)/instance/media:/app/instance/media media-vault
+docker run \
+    -p 5000:5000 \
+    -v $(pwd)/instance/media:/app/instance/media \
+    -v $(pwd)/instance/thumbnails:/app/instance/thumbnails \
+    media-vault
 ```
 
 The app will be accessible at `http://localhost:5000`
