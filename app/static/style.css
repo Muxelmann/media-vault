@@ -26,6 +26,99 @@ footer {
     }
 }
 
+/* List View (single column, horizontal rows) */
+#media-grid.list-view {
+    display: block;
+    margin-top: 1rem;
+}
+
+#media-grid.list-view > div {
+    height: 74px;
+}
+
+#media-grid.list-view .media-item {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    margin-bottom: 0.5rem;
+}
+
+#media-grid.list-view .media-item > a {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: 100%;
+}
+
+#media-grid.list-view .media-thumbnail {
+    flex-shrink: 0;
+    width: 120px;
+    height: 100%;
+    border-radius: 0.375rem 0 0 0.375rem;
+}
+
+#media-grid.list-view .media-thumbnail img {
+    height: 100%;
+}
+
+#media-grid.list-view .card-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    border-radius: 0 0.375rem 0.375rem 0;
+    overflow: hidden;
+}
+
+#media-grid.list-view .card-title {
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#media-grid.list-view .media-item:hover {
+    transform: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Layout toggle button */
+.layout-toggle-container {
+    margin-bottom: 1rem;
+    text-align: right;
+}
+
+.layout-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    border: 1px solid #dee2e6;
+    background-color: #fff;
+    color: #495057;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.layout-toggle-btn:hover {
+    background-color: #f8f9fa;
+    border-color: #adb5bd;
+}
+
+.layout-toggle-btn.active {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    color: #fff;
+}
+
+.layout-toggle-btn.active:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+}
+
 .media-item {
     transition: transform 0.2s, box-shadow 0.2s;
     cursor: pointer;
@@ -44,6 +137,7 @@ footer {
     align-items: center;
     justify-content: center;
     overflow: hidden;
+    height: 150px;
 }
 
 .media-thumbnail img {

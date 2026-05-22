@@ -5,6 +5,16 @@
 {% block content %}
 {% include "snippets/breadcrumb-navigation.html" %}
 
+<!-- Layout toggle buttons -->
+<div class="layout-toggle-container">
+    <button id="grid-view-btn" class="layout-toggle-btn active" title="Grid view">
+        <span>📋</span> <span>Grid</span>
+    </button>
+    <button id="list-view-btn" class="layout-toggle-btn" title="List view">
+        <span>📜</span> <span>List</span>
+    </button>
+</div>
+
 <!-- Grid will be populated by JavaScript -->
 <div id="media-grid" class="row g-3" data-path="{{ current_path }}" data-offset="{{ offset + limit }}" data-limit="{{ limit }}" data-has-more="{{ has_more | lower }}" data-total="{{ total }}">
 </div>
@@ -36,8 +46,8 @@
     // HTML template constants (reference snippets/directory.html, snippets/media-item.html)
     const ITEM_TEMPLATES = {
         directory: (item) => `
-            <a href="/browse/${encodeURIComponent(item.path)}" class="text-decoration-none text-dark d-block">
-                <div class="media-thumbnail bg-secondary d-flex align-items-center justify-content-center" style="height: 200px;">
+            <a href="/browse/${encodeURIComponent(item.path)}" class="text-decoration-none text-dark">
+                <div class="media-thumbnail bg-secondary d-flex align-items-center justify-content-center">
                     <div class="text-center">
                         <div style="font-size: 3rem;">🗂️</div>
                     </div>
@@ -62,8 +72,8 @@
             }
 
             return `
-                <a href="/view/${encodeURIComponent(item.path)}" class="text-decoration-none text-dark d-block">
-                    <div class="media-thumbnail bg-light position-relative" style="height: 200px; overflow: hidden;">
+                <a href="/view/${encodeURIComponent(item.path)}" class="text-decoration-none text-dark">
+                    <div class="media-thumbnail bg-light position-relative">
                         <img src="/api/thumbnails/${encodeURIComponent(item.path)}" alt="${item.name}" class="w-100 h-100" style="object-fit: cover;">
                         ${badge}
                         ${overlay}
@@ -77,8 +87,8 @@
         },
 
         unsupported: (item) => `
-            <a class="text-decoration-none text-dark d-block">
-                <div class="media-thumbnail bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+            <a class="text-decoration-none text-dark">
+                <div class="media-thumbnail bg-light d-flex align-items-center justify-content-center">
                     <div class="text-center">
                         <div style="font-size: 3rem;">📄</div>
                     </div>
@@ -135,10 +145,42 @@
         const emptyState = document.getElementById('empty-state');
         const loadingIndicator = document.getElementById('loading-indicator');
         const endOfList = document.getElementById('end-of-list');
+        const gridViewBtn = document.getElementById('grid-view-btn');
+        const listViewBtn = document.getElementById('list-view-btn');
         const scrollToTopBtn = document.getElementById('scroll-to-top');
 
         let isLoading = false;
         let initialItemsLoaded = false;
+        let currentLayout = 'grid'; // 'grid' or 'list'
+
+        // Load saved layout preference
+        const savedLayout = localStorage.getItem('mediaVaultLayout');
+        if (savedLayout === 'list') {
+            currentLayout = 'list';
+            grid.classList.add('list-view');
+            gridViewBtn.classList.remove('active');
+            listViewBtn.classList.add('active');
+        }
+
+        // Layout toggle functions
+        function setGridLayout() {
+            grid.classList.remove('list-view');
+            gridViewBtn.classList.add('active');
+            listViewBtn.classList.remove('active');
+            currentLayout = 'grid';
+            localStorage.setItem('mediaVaultLayout', 'grid');
+        }
+
+        function setListLayout() {
+            grid.classList.add('list-view');
+            gridViewBtn.classList.remove('active');
+            listViewBtn.classList.add('active');
+            currentLayout = 'list';
+            localStorage.setItem('mediaVaultLayout', 'list');
+        }
+
+        gridViewBtn.addEventListener('click', setGridLayout);
+        listViewBtn.addEventListener('click', setListLayout);
 
         // Handle scroll-to-top button visibility and click
         window.addEventListener('scroll', function() {
