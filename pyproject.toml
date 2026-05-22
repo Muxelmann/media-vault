@@ -1,11 +1,12 @@
 [project]
-name = "media-vault-anthropic"
+name = "media-vault"
 version = "0.1.0"
 description = "A Flask-based media browser for browsing and previewing media files"
 requires-python = ">=3.11"
 dependencies = [
     "Flask==3.0.0",
     "Pillow>=11.0.0",
+    "gunicorn>=26.0.0",
     "numpy<2",
     "opencv-python-headless>=4.8.1.78",
 ]
