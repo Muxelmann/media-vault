@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}{{ file_info.name }} - Media Browser{% endblock %}
+
+{% block content %}
+{% include "snippets/breadcrumb-navigation.html" %}
+
+<div class="row">
+    <div class="col-12">
+        <!-- Media Viewer Card -->
+        <div class="card" style="max-width: 800px; margin: 0 auto;">
+            <div class="card-body text-center py-5">
+                {% if file_info.media_type == 'image' %}
+                    <!-- Image Viewer -->
+                    <img src="/media/{{ file_path | urlencode }}" alt="{{ file_info.name }}" class="img-fluid" style="max-height: 70vh; max-width: 100%;">
+                {% elif file_info.media_type == 'video' %}
+                    <!-- Video Player -->
+                    <video controls style="max-height: 70vh; max-width: 100%;">
+                        <source src="/media/{{ file_path | urlencode }}" type="{{ file_info.mime_type }}">
+                        Your browser does not support the video tag.
+                    </video>
+                {% endif %}
+            </div>
+            <div class="card-footer">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>{{ file_info.name }}</h5>
+                        <p class="text-muted">{{ file_info.media_type | upper }}</p>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        {% if file_info.size %}
+                        <p class="text-muted">
+                            <strong>Size:</strong> {{ (file_info.size / 1024 / 1024) | round(2) }} MB
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Buttons Below Card -->
+        {% include "snippets/navigation-buttons.html" %}
+
+        <!-- Position Counter -->
+        {% if current_index is not none %}
+        <div class="text-center mt-3">
+            <small class="text-muted">Item {{ current_index + 1 }} of {{ total_media_files }}</small>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'ArrowLeft') {
+        const prevLink = document.querySelector('a.media-nav-prev');
+        if (prevLink && !prevLink.disabled) {
+            prevLink.click();
+        }
+    } else if (event.key === 'ArrowRight') {
+        const nextLink = document.querySelector('a.media-nav-next');
+        if (nextLink && !nextLink.disabled) {
+            nextLink.click();
+        }
+    }
+});
+</script>
+{% endblock %}

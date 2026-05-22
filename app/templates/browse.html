@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block title %}Browse - Media Browser{% endblock %}
+
+{% block content %}
+{% include "snippets/breadcrumb-navigation.html" %}
+
+<!-- Grid will be populated by JavaScript -->
+<div id="media-grid" class="row g-3" data-path="{{ current_path }}" data-offset="{{ offset + limit }}" data-limit="{{ limit }}" data-has-more="{{ has_more | lower }}" data-total="{{ total }}">
+</div>
+
+<!-- Empty state message (hidden by default, shown if no items) -->
+<div id="empty-state" class="alert alert-info" style="display: none;">
+    <strong>📭 No items found</strong><br>
+    This directory is empty.
+</div>
+
+<!-- Infinite scroll loading indicator -->
+<div id="loading-indicator" class="text-center my-5" style="display: none;">
+    <div class="spinner-border" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+</div>
+
+<div id="end-of-list" class="visually-hidden"></div>
+
+<!-- Scroll to top button -->
+<button id="scroll-to-top" class="btn btn-secondary rounded-circle" style="position: fixed; bottom: 2rem; right: 2rem; width: 50px; height: 50px; z-index: 99; padding: 0; display: none; align-items: center; justify-content: center;" title="Scroll to top">
+    ↑
+</button>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // HTML template constants (reference snippets/directory.html, snippets/media-item.html)
+    const ITEM_TEMPLATES = {
+        directory: (item) => `
+            <a href="/browse/${encodeURIComponent(item.path)}" class="text-decoration-none text-dark d-block">
+                <div class="media-thumbnail bg-secondary d-flex align-items-center justify-content-center" style="height: 200px;">
+                    <div class="text-center">
+                        <div style="font-size: 3rem;">🗂️</div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <h6 class="card-title">${item.name}</h6>
+                </div>
+            </a>
+        `,
+
+        media: (item) => {
+            let badge = '';
+            let overlay = '';
+
+            if (item.media_type === 'video') {
+                badge = '<div class="position-absolute top-0 end-0 m-2"><span class="badge bg-info">VID</span></div>';
+                overlay = '<div class="position-absolute top-50 start-50 translate-middle"><span style="font-size: 2.5rem; color: rgba(0,0,0,0.8); text-shadow: 0 0 4px rgba(0,0,0,0.5);">▶️</span></div>';
+            } else if (item.suffix === '.gif') {
+                badge = '<div class="position-absolute top-0 end-0 m-2"><span class="badge bg-info">GIF</span></div>';
+            } else {
+                badge = '<div class="position-absolute top-0 end-0 m-2"><span class="badge bg-info">IMG</span></div>';
+            }
+
+            return `
+                <a href="/view/${encodeURIComponent(item.path)}" class="text-decoration-none text-dark d-block">
+                    <div class="media-thumbnail bg-light position-relative" style="height: 200px; overflow: hidden;">
+                        <img src="/api/thumbnails/${encodeURIComponent(item.path)}" alt="${item.name}" class="w-100 h-100" style="object-fit: cover;">
+                        ${badge}
+                        ${overlay}
+                    </div>
+                    <div class="card-body">
+                        <h6 class="card-title text-truncate">${item.name}</h6>
+                        <small class="text-muted">${item.media_type?.toUpperCase() || 'FILE'}</small>
+                    </div>
+                </a>
+            `;
+        },
+
+        unsupported: (item) => `
+            <a class="text-decoration-none text-dark d-block">
+                <div class="media-thumbnail bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                    <div class="text-center">
+                        <div style="font-size: 3rem;">📄</div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <h6 class="card-title text-truncate">${item.name}</h6>
+                    <small class="text-muted">${item.suffix}</small>
+                </div>
+            </a>
+        `
+    };
+
+    // Render a single item using appropriate template
+    function renderItem(item) {
+        let innerHtml = '';
+        if (item.is_dir) {
+            innerHtml = ITEM_TEMPLATES.directory(item);
+        } else if (item.is_media) {
+            innerHtml = ITEM_TEMPLATES.media(item);
+        } else {
+            innerHtml = ITEM_TEMPLATES.unsupported(item);
+        }
+
+        const col = document.createElement('div');
+        col.className = '';
+        col.innerHTML = `
+            <div class="media-item card h-100 overflow-hidden" data-path="${item.path}">
+                ${innerHtml}
+            </div>
+        `;
+        return col;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const grid = document.getElementById('media-grid');
+        const emptyState = document.getElementById('empty-state');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const endOfList = document.getElementById('end-of-list');
+        const scrollToTopBtn = document.getElementById('scroll-to-top');
+
+        let isLoading = false;
+        let initialItemsLoaded = false;
+
+        // Handle scroll-to-top button visibility and click
+        window.addEventListener('scroll', function() {
+            if (window.scrollY > 300) {
+                scrollToTopBtn.style.display = 'flex';
+            } else {
+                scrollToTopBtn.style.display = 'none';
+            }
+        });
+
+        scrollToTopBtn.addEventListener('click', function() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // Render initial items (passed via data attribute)
+        function renderInitialItems(items) {
+            if (items.length === 0) {
+                emptyState.style.display = 'block';
+                grid.style.display = 'none';
+                return;
+            }
+
+            grid.style.display = '';
+            emptyState.style.display = 'none';
+
+            items.forEach(item => {
+                grid.appendChild(renderItem(item));
+            });
+
+            initialItemsLoaded = true;
+        }
+
+        // Load more items via API
+        function loadMoreItems() {
+            if (isLoading || grid.dataset.hasMore !== 'true') return;
+
+            isLoading = true;
+            loadingIndicator.style.display = 'block';
+
+            const path = grid.dataset.path;
+            const offset = parseInt(grid.dataset.offset);
+            const limit = parseInt(grid.dataset.limit);
+
+            fetch(`/api/list/${encodeURIComponent(path)}?offset=${offset}&limit=${limit}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.items && data.items.length > 0) {
+                        data.items.forEach(item => {
+                            grid.appendChild(renderItem(item));
+                        });
+
+                        grid.dataset.offset = offset + limit;
+                        grid.dataset.hasMore = data.has_more ? 'true' : 'false';
+                    }
+
+                    isLoading = false;
+                    loadingIndicator.style.display = 'none';
+
+                    if (!data.has_more) {
+                        endOfList.scrollIntoView({ behavior: 'smooth' });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading items:', error);
+                    isLoading = false;
+                    loadingIndicator.style.display = 'none';
+                });
+        }
+
+        // Load initial items from API
+        const path = grid.dataset.path;
+        fetch(`/api/list/${encodeURIComponent(path)}?offset=0&limit=${grid.dataset.limit}`)
+            .then(response => response.json())
+            .then(data => {
+                renderInitialItems(data.items);
+                grid.dataset.offset = data.offset + data.limit;
+                grid.dataset.hasMore = data.has_more ? 'true' : 'false';
+                grid.dataset.total = data.total;
+
+                if (data.items.length === 0) {
+                    loadingIndicator.style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading initial items:', error);
+                emptyState.style.display = 'block';
+                loadingIndicator.style.display = 'none';
+            });
+
+        // Infinite scroll observer
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting && grid.dataset.hasMore === 'true' && initialItemsLoaded) {
+                    loadMoreItems();
+                }
+            });
+        });
+
+        observer.observe(endOfList);
+    });
+</script>
+{% endblock %}

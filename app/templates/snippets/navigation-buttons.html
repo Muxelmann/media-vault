@@ -1,0 +1,23 @@
+<div class="media-navigation-container mt-4">
+    <!-- Previous Button -->
+    {% if prev_file %}
+        <a href="/view/{{ prev_file | urlencode }}" class="btn btn-outline-secondary media-nav-arrow media-nav-prev" title="Previous media (← arrow key)">
+            <span style="font-size: 1.5rem;">←</span> Previous
+        </a>
+    {% else %}
+        <button class="btn btn-outline-secondary media-nav-arrow media-nav-prev disabled" disabled title="No previous media">
+            <span style="font-size: 1.5rem;">←</span> Previous
+        </button>
+    {% endif %}
+
+    <!-- Next Button -->
+    {% if next_file %}
+        <a href="/view/{{ next_file | urlencode }}" class="btn btn-outline-secondary media-nav-arrow media-nav-next" title="Next media (→ arrow key)">
+            Next <span style="font-size: 1.5rem;">→</span>
+        </a>
+    {% else %}
+        <button class="btn btn-outline-secondary media-nav-arrow media-nav-next disabled" disabled title="No next media">
+            Next <span style="font-size: 1.5rem;">→</span>
+        </button>
+    {% endif %}
+</div>

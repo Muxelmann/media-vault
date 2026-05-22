@@ -1,0 +1,28 @@
+<div class="row mb-4 align-items-center">
+    <div class="col">
+        <!-- Breadcrumb Navigation -->
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                {% for label, url in breadcrumbs %}
+                    {% if loop.last %}
+                        <li class="breadcrumb-item active" aria-current="page">{{ label }}</li>
+                    {% else %}
+                        <li class="breadcrumb-item"><a href="{{ url }}">{{ label }}</a></li>
+                    {% endif %}
+                {% endfor %}
+            </ol>
+        </nav>
+    </div>
+    <div class="col-auto">
+        <!-- Back Button -->
+        {% if parent_path %}
+            <a href="/browse/{{ parent_path | urlencode }}" class="btn btn-secondary">
+                ⇧ Back to Folder
+            </a>
+        {% else %}
+            <a href="/" class="btn btn-secondary">
+                ⇪ Back to Root
+            </a>
+        {% endif %}
+    </div>
+</div>

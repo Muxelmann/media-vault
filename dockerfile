@@ -1,9 +1,32 @@
-# muxelmann/media-vault:2.0.0 (and :xxx-dev and :latest)
-# docker buildx build \
-#     --push \
-#     --platform linux/arm64/v8,linux/arm/v7,linux/amd64 \
-#     --tag muxelmann/media-vault:2.0.0-dev \
-#     .
-FROM muxelmann/media-vault:2.x-base
+FROM python:3.11-slim
 
-COPY ./src /app
+WORKDIR /app
+
+# Install system dependencies for media processing
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install uv package manager
+RUN pip install --no-cache-dir uv
+
+# Copy project files
+COPY pyproject.toml .
+COPY app/ ./app/
+
+# Install Python dependencies using uv
+RUN uv sync --frozen
+
+# Create instance/media directory
+RUN mkdir -p /app/instance/media
+
+# Expose port
+EXPOSE 5000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:5000/ || exit 1
+
+# Run the Flask app
+CMD [".venv/bin/python", "app/main.py"]
