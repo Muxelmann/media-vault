@@ -112,7 +112,7 @@
         return col;
     }
 
-    function renderLoadMoreButton() {
+    function renderLoadMoreButton(loadMoreCallback) {
         const col = document.createElement('div');
         // Align items in center and middle
         col.className = '';
@@ -124,6 +124,9 @@
                 </button>
             </div>
         `;
+        // Attach event listener to the button
+        const button = col.querySelector('button');
+        button.addEventListener('click', loadMoreCallback);
         return col;
     }
 
@@ -201,7 +204,7 @@
                     loadingIndicator.style.display = 'none';
 
                     if (data.has_more) {
-                        grid.appendChild(renderLoadMoreButton()); // Spacer for loading indicator
+                        grid.appendChild(renderLoadMoreButton(loadMoreItems));
                     } else {
                         endOfList.scrollIntoView({ behavior: 'smooth' });
                     }
@@ -228,7 +231,7 @@
                 }
 
                 if (grid.dataset.hasMore === 'true') {
-                    grid.appendChild(renderLoadMoreButton()); // Spacer for loading indicator
+                    grid.appendChild(renderLoadMoreButton(loadMoreItems));
                 }
             })
             .catch(error => {
