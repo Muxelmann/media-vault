@@ -112,6 +112,21 @@
         return col;
     }
 
+    function renderLoadMoreButton() {
+        const col = document.createElement('div');
+        // Align items in center and middle
+        col.className = '';
+        col.id = 'load-more-button';
+        col.innerHTML = `
+            <div class="d-flex justify-content-center align-items-center w-100 h-100">
+                <button class="card btn btn-outline-secondary w-100">
+                    Load More...
+                </button>
+            </div>
+        `;
+        return col;
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         const grid = document.getElementById('media-grid');
         const emptyState = document.getElementById('empty-state');
@@ -164,6 +179,12 @@
             const offset = parseInt(grid.dataset.offset);
             const limit = parseInt(grid.dataset.limit);
 
+            // Remove load more button if it exists
+            const loadMoreBtn = document.getElementById('load-more-button');
+            if (loadMoreBtn) {
+                loadMoreBtn.remove();
+            }
+
             fetch(`/api/list/${encodeURIComponent(path)}?offset=${offset}&limit=${limit}`)
                 .then(response => response.json())
                 .then(data => {
@@ -179,7 +200,9 @@
                     isLoading = false;
                     loadingIndicator.style.display = 'none';
 
-                    if (!data.has_more) {
+                    if (data.has_more) {
+                        grid.appendChild(renderLoadMoreButton()); // Spacer for loading indicator
+                    } else {
                         endOfList.scrollIntoView({ behavior: 'smooth' });
                     }
                 })
@@ -202,6 +225,10 @@
 
                 if (data.items.length === 0) {
                     loadingIndicator.style.display = 'none';
+                }
+
+                if (grid.dataset.hasMore === 'true') {
+                    grid.appendChild(renderLoadMoreButton()); // Spacer for loading indicator
                 }
             })
             .catch(error => {
