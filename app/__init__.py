@@ -21,7 +21,6 @@ def create_app(config=None):
     # Configuration
     app.config["MEDIA_ROOT"] = str(media_path)
     app.config["THUMBNAIL_CACHE_ROOT"] = str(thumbnail_cache_path)
-    app.config["MAX_CONTENT_LENGTH"] = 512 * 1024 * 1024  # 512MB max file size
 
     if config:
         app.config.update(config)
