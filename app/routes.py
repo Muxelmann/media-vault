@@ -2,6 +2,8 @@ from pathlib import Path
 from flask import Blueprint, render_template, current_app, send_file, jsonify, request
 from urllib.parse import quote
 
+from app.video_streaming import stream_file_with_ranges
+
 from app.security import secure_path
 from app.media_handler import (
     list_directory,
@@ -276,7 +278,7 @@ def api_thumbnail(filepath):
 
 @bp.route("/media/<path:filepath>")
 def serve_media(filepath):
-    """Serve media file."""
+    """Serve media file with HTTP Range request support for streaming."""
     media_root = Path(current_app.config["MEDIA_ROOT"])
 
     # Validate path
@@ -291,7 +293,7 @@ def serve_media(filepath):
         return jsonify({"error": "Cannot serve directory"}), 400
 
     mime_type = get_mime_type(safe)
-    return send_file(safe, mimetype=mime_type, as_attachment=False)
+    return stream_file_with_ranges(safe, mime_type)
 
 
 # Import BytesIO at the end to avoid circular imports
